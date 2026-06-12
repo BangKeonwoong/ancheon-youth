@@ -178,6 +178,7 @@ header{
   padding:3px 8px;border-radius:6px;flex-shrink:0;
 }
 .notice-banner .txt{font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nb-count{margin-left:auto;font-size:.72rem;color:var(--sub);flex-shrink:0;font-weight:600}
 .home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .board-preview{padding:14px 16px}
 .board-preview h3{
@@ -484,7 +485,9 @@ header{
   z-index:300;animation:toastup 2.2s forwards;white-space:nowrap;
 }
 @keyframes toastup{0%{opacity:0}15%{opacity:1}80%{opacity:1}100%{opacity:0}}
-.bell{position:relative;font-size:1.15rem;padding:6px;flex-shrink:0}
+.bell{position:relative;padding:7px;flex-shrink:0;color:#555;border-radius:8px}
+.bell:hover{background:var(--bg)}
+.bell svg{width:20px;height:20px;display:block}
 .bell-dot{position:absolute;top:4px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--primary)}
 .noti-panel{
   position:absolute;top:56px;right:16px;width:300px;max-height:380px;overflow-y:auto;
@@ -504,6 +507,26 @@ header{
   padding:8px 16px;margin-top:12px;font-size:.88rem;
 }
 .dday-apply:hover{background:rgba(255,255,255,.35)}
+
+/* ===== 모바일 전체 메뉴 시트 ===== */
+.sheet-bg{position:fixed;inset:0;background:rgba(20,20,25,.45);z-index:120;display:flex;align-items:flex-end}
+.sheet{
+  background:var(--card);border-radius:18px 18px 0 0;width:100%;
+  padding:18px 16px 28px;animation:sheetup .22s ease;
+}
+@keyframes sheetup{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+.sheet-search{display:flex;gap:8px;margin-bottom:14px}
+.sheet-search input{flex:1;border:1px solid var(--line);border-radius:10px;padding:11px 12px;outline:none;font-size:.95rem;min-width:0}
+.sheet-search input:focus{border-color:var(--primary)}
+.sheet-search button{background:var(--primary);color:#fff;font-weight:700;border-radius:10px;padding:0 16px;flex-shrink:0}
+.sheet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sheet-item{
+  display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 4px;
+  border:1px solid var(--line);border-radius:12px;font-size:.8rem;font-weight:600;color:var(--text);
+  background:var(--card);
+}
+.sheet-item:active{background:var(--primary-soft)}
+.sheet-item .ico{font-size:1.5rem}
 
 /* ===== Mobile ===== */
 .mobile-nav{display:none}
@@ -560,7 +583,10 @@ header{
       <button data-nav="admin" id="adminNavBtn" class="hidden" onclick="showView('admin')">🛠️ 관리</button>
     </nav>
     <div class="search">🔍<input id="searchInput" placeholder="게시글 검색" onkeydown="if(event.key==='Enter')doSearch()"></div>
-    <button class="bell" onclick="toggleNoti()" title="알림">🔔<span class="bell-dot hidden" id="bellDot"></span></button>
+    <button class="bell" onclick="toggleNoti()" title="알림" aria-label="알림">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      <span class="bell-dot hidden" id="bellDot"></span>
+    </button>
     <div class="user-chip" title="프로토타입: 역할을 바꿔가며 화면을 체험해 보세요">
       <div class="avatar" id="meAvatar">하은</div>
       <select class="persona-select" id="personaSelect" onchange="switchPersona(this.value)">
@@ -745,9 +771,14 @@ header{
   <button data-nav="home" class="active" onclick="showView('home')"><span class="ico">🏠</span>홈</button>
   <button data-nav="board" onclick="openBoard('free')"><span class="ico">📋</span>게시판</button>
   <button data-nav="write" onclick="showView('write')"><span class="ico">✏️</span>글쓰기</button>
-  <button data-nav="prayer" onclick="showView('prayer')"><span class="ico">🙏</span>기도</button>
   <button data-nav="points" onclick="showView('points')"><span class="ico">🎁</span>포인트</button>
+  <button onclick="openSheet()"><span class="ico">☰</span>전체</button>
 </nav>
+
+<!-- 모바일 전체 메뉴 시트 -->
+<div class="sheet-bg hidden" id="menuSheet" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet" id="sheetBody"></div>
+</div>
 
 <div id="modalRoot"></div>
 
@@ -997,13 +1028,7 @@ setInterval(()=>{ // 5초마다 자동 전환 (홈이 보일 때만)
 /* ================= 홈 ================= */
 function renderHome(){
   renderHero();
-  const n = posts.filter(p=>p.notice)[0];
-  const banner = document.getElementById('noticeBanner');
-  banner.classList.toggle('hidden', !n);
-  if(n){
-    banner.innerHTML = `<span class="tag">공지</span><span class="txt">${n.title}</span>`;
-    banner.onclick = ()=>openPost(n.id);
-  }
+  renderNoticeBanner();
 
   document.getElementById('homeGrid').innerHTML = visibleBoards().map(b=>{
     let pool = posts.filter(p=>p.board===b.id);
@@ -1021,6 +1046,33 @@ function renderHome(){
   }).join('');
   renderHot(); renderDday(); renderAttMini();
 }
+
+/* 공지 배너 — 일반 공지 + 팀 공지(콘티 등)를 4초마다 순환 */
+let noticeBannerIdx = 0;
+function visibleNotices(){
+  return posts.filter(p=>p.notice && canSeePost(p)).slice().reverse();
+}
+function renderNoticeBanner(){
+  const list = visibleNotices();
+  const banner = document.getElementById('noticeBanner');
+  banner.classList.toggle('hidden', !list.length);
+  if(!list.length) return;
+  noticeBannerIdx = noticeBannerIdx % list.length;
+  const n = list[noticeBannerIdx];
+  const b = boards.find(x=>x.id===n.board);
+  banner.innerHTML = `
+    <span class="tag">${b.group==='team' ? b.icon+' '+b.name : '공지'}</span>
+    <span class="txt">${n.title}</span>
+    ${list.length>1?`<span class="nb-count">${noticeBannerIdx+1}/${list.length}</span>`:''}`;
+  banner.onclick = ()=>openPost(n.id);
+}
+setInterval(()=>{
+  const home = document.getElementById('view-home');
+  if(home && !home.classList.contains('hidden') && visibleNotices().length>1){
+    noticeBannerIdx++;
+    renderNoticeBanner();
+  }
+}, 4000);
 
 function renderHot(){
   const hot = posts.filter(canSeePost).slice().sort((a,b)=>b.likes-a.likes).slice(0,5);
@@ -1914,6 +1966,44 @@ let saveTimer;
 function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveState, 300); }
 document.addEventListener('click', queueSave, true);
 document.addEventListener('keydown', queueSave, true);
+
+/* ================= 모바일 전체 메뉴 ================= */
+function openSheet(){
+  const items = [
+    ['🙏','기도제목', "showView('prayer')"],
+    ['📅','일정', "showView('calendar')"],
+    ['✅','출석체크', "showView('attendance')"],
+    ['📢','공지사항', "openBoard('notice')"],
+    ['⛪','주보·예배', "openBoard('bulletin')"],
+    ['✋','가입 신청', 'openSignupModal()'],
+  ];
+  if(canAdmin()) items.push(['🛠️','관리자', "showView('admin')"]);
+  document.getElementById('sheetBody').innerHTML = `
+    <div class="sheet-search">
+      <input id="sheetSearch" placeholder="게시글 검색" onkeydown="if(event.key==='Enter')sheetDoSearch()">
+      <button onclick="sheetDoSearch()">검색</button>
+    </div>
+    <div class="sheet-grid">
+      ${items.map(i=>`<button class="sheet-item" onclick="closeSheet();${i[2]}"><span class="ico">${i[0]}</span>${i[1]}</button>`).join('')}
+    </div>`;
+  document.getElementById('menuSheet').classList.remove('hidden');
+}
+function closeSheet(){ document.getElementById('menuSheet').classList.add('hidden'); }
+function sheetDoSearch(){
+  const v = document.getElementById('sheetSearch').value.trim();
+  if(!v) return;
+  document.getElementById('searchInput').value = v;
+  closeSheet();
+  doSearch();
+}
+
+/* 알림 패널: 바깥 클릭/터치 시 닫기 */
+document.addEventListener('click', e=>{
+  const p = document.getElementById('notiPanel');
+  if(p.classList.contains('hidden')) return;
+  if(e.target.closest('#notiPanel') || e.target.closest('.bell')) return;
+  p.classList.add('hidden');
+});
 
 /* ================= 검색 ================= */
 function doSearch(){

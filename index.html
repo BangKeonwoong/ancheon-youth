@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안천 청소년부 커뮤니티</title>
+<style>
+:root{
+  --primary:#E94F37;
+  --primary-soft:#FDEEEB;
+  --bg:#F7F7F8;
+  --card:#FFFFFF;
+  --line:#E4E4E7;
+  --text:#222226;
+  --sub:#8B8B93;
+  --teacher:#2D6CDF;
+  --pastor:#C0392B;
+  --hot:#E94F37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{
+  font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,textarea,select{font-family:inherit;font-size:1rem}
+a{text-decoration:none;color:inherit}
+
+/* ===== Header ===== */
+header{
+  position:sticky;top:0;z-index:50;background:var(--card);
+  border-bottom:1px solid var(--line);
+}
+.header-inner{
+  max-width:1440px;margin:0 auto;padding:0 24px;height:60px;
+  display:flex;align-items:center;gap:24px;
+}
+.logo{display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0}
+.logo .mark{
+  width:30px;height:30px;border-radius:8px;background:var(--primary);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15px;
+}
+.logo .name{font-weight:800;font-size:1.1rem}
+.logo .name span{color:var(--primary)}
+.gnb{display:flex;gap:4px;flex:1;min-width:0;overflow:hidden}
+.gnb button{
+  padding:7px 14px;border-radius:8px;font-size:.95rem;font-weight:600;color:var(--sub);
+  white-space:nowrap;flex-shrink:0;
+}
+.gnb button:hover{background:var(--bg)}
+.gnb button.active{color:var(--primary);background:var(--primary-soft)}
+.search{
+  display:flex;align-items:center;gap:6px;background:var(--bg);
+  border-radius:8px;padding:8px 12px;flex:0 1 240px;min-width:110px;
+}
+.search input{border:none;background:none;outline:none;width:100%;font-size:.9rem}
+.user-chip{
+  display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;
+  padding:5px 10px;border-radius:20px;border:1px solid var(--line);
+}
+.avatar{
+  width:30px;height:30px;border-radius:50%;background:var(--primary-soft);
+  color:var(--primary);font-weight:700;font-size:10px;letter-spacing:-.5px;
+  display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden;
+}
+.user-chip .uname{font-weight:600;font-size:.9rem}
+
+/* ===== Layout ===== */
+.layout{
+  max-width:1440px;margin:0 auto;padding:24px;
+  display:grid;grid-template-columns:240px minmax(0,1fr) 330px;gap:24px;
+  align-items:start;
+}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px}
+
+/* ===== Left sidebar ===== */
+.side-section{padding:8px;margin-bottom:12px}
+.side-title{font-size:.8rem;font-weight:700;color:var(--sub);padding:8px 10px 4px}
+.side-menu button{
+  display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+  padding:8px 10px;border-radius:8px;font-size:.95rem;font-weight:500;color:var(--text);
+}
+.side-menu button:hover{background:var(--bg)}
+.side-menu button.active{background:var(--primary-soft);color:var(--primary);font-weight:700}
+.side-menu .cnt{margin-left:auto;font-size:.75rem;color:var(--sub)}
+.write-btn{
+  display:block;width:100%;padding:11px;border-radius:10px;margin-bottom:12px;
+  background:var(--primary);color:#fff;font-weight:700;font-size:.98rem;text-align:center;
+}
+.write-btn:hover{filter:brightness(.95)}
+
+/* ===== Right sidebar ===== */
+.widget{padding:14px 16px;margin-bottom:12px}
+.widget h3{font-size:.95rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.widget h3 .more{margin-left:auto;font-size:.78rem;color:var(--sub);font-weight:500;cursor:pointer}
+.dday{
+  background:linear-gradient(135deg,#E94F37,#F2784B);color:#fff;border:none;
+}
+.dday .dd-label{font-size:.82rem;opacity:.9}
+.dday .dd-title{font-size:1.15rem;font-weight:800;margin:2px 0}
+.dday .dd-count{font-size:1.7rem;font-weight:900}
+.worship-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.88rem}
+.worship-row .k{color:var(--sub)}
+.worship-row .v{font-weight:600}
+.hot-item{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--bg);cursor:pointer;align-items:baseline}
+.hot-item:last-child{border:none}
+.hot-item .rank{font-weight:800;color:var(--primary);font-size:.85rem;width:14px;flex-shrink:0}
+.hot-item .t{font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hot-item .lk{margin-left:auto;font-size:.75rem;color:var(--primary);flex-shrink:0}
+.att-mini{display:flex;gap:5px;margin-top:4px}
+.att-dot{
+  flex:1;min-height:44px;padding:5px 0;border-radius:8px;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--sub);
+  flex-direction:column;gap:1px;overflow:hidden;
+}
+.att-dot.on{background:var(--primary-soft);color:var(--primary);font-weight:700}
+
+/* ===== Hero (홈 상단 이미지 배너) ===== */
+.hero{
+  position:relative;height:240px;border-radius:16px;overflow:hidden;
+  margin-bottom:12px;cursor:pointer;border:1px solid var(--line);
+}
+.hero-slide{
+  position:absolute;inset:0;opacity:0;transition:opacity .6s ease;
+  display:flex;align-items:flex-end;background-size:cover;background-position:center;
+  pointer-events:none;
+}
+.hero-slide.on{opacity:1;pointer-events:auto}
+.hero-slide .hs-emoji{
+  position:absolute;right:48px;top:44%;transform:translateY(-50%);
+  font-size:6.5rem;opacity:.4;text-shadow:0 6px 24px rgba(0,0,0,.2);
+}
+.hero-slide .hs-body{
+  position:relative;padding:24px 28px;color:#fff;width:100%;
+  background:linear-gradient(transparent,rgba(0,0,0,.5));
+}
+.hs-tag{
+  display:inline-block;background:rgba(255,255,255,.28);
+  font-size:.68rem;font-weight:800;letter-spacing:1.5px;
+  padding:3px 10px;border-radius:12px;margin-bottom:7px;
+}
+.hs-title{font-size:1.65rem;font-weight:900;text-shadow:0 2px 10px rgba(0,0,0,.3);line-height:1.25}
+.hs-sub{font-size:.92rem;opacity:.95;margin-top:3px;text-shadow:0 1px 6px rgba(0,0,0,.3)}
+.hero-nav{position:absolute;bottom:16px;right:18px;display:flex;gap:6px;z-index:5;align-items:center}
+.hero-dot{
+  width:8px;height:8px;border-radius:5px;background:rgba(255,255,255,.5);
+  cursor:pointer;transition:all .25s;
+}
+.hero-dot.on{background:#fff;width:22px}
+.hero-arrow{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+  width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.28);color:#fff;
+  font-size:1.05rem;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .2s;
+}
+.hero:hover .hero-arrow{opacity:1}
+.hero-arrow:hover{background:rgba(0,0,0,.45)}
+.hero-arrow.l{left:14px}
+.hero-arrow.r{right:14px}
+@media(max-width:720px){
+  .hero{height:175px;border-radius:14px}
+  .hs-title{font-size:1.25rem}
+  .hs-sub{font-size:.82rem}
+  .hero-slide .hs-emoji{font-size:4rem;right:20px}
+  .hero-slide .hs-body{padding:16px 18px}
+}
+
+/* ===== Home ===== */
+.notice-banner{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;margin-bottom:12px;
+  background:var(--primary-soft);border:1px solid #F5CFC7;border-radius:12px;cursor:pointer;
+}
+.notice-banner .tag{
+  background:var(--primary);color:#fff;font-size:.72rem;font-weight:700;
+  padding:3px 8px;border-radius:6px;flex-shrink:0;
+}
+.notice-banner .txt{font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.board-preview{padding:14px 16px}
+.board-preview h3{
+  font-size:.98rem;font-weight:700;margin-bottom:8px;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+}
+.board-preview h3:hover{color:var(--primary)}
+.board-preview h3 .arr{margin-left:auto;color:var(--sub);font-size:.8rem;font-weight:400}
+.bp-item{
+  display:flex;gap:8px;padding:6px 0;font-size:.88rem;cursor:pointer;
+  border-bottom:1px solid var(--bg);align-items:baseline;
+}
+.bp-item:last-child{border:none}
+.bp-item:hover .t{color:var(--primary)}
+.bp-item .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bp-item .meta{margin-left:auto;flex-shrink:0;font-size:.75rem;color:var(--sub)}
+.bp-item .c{color:var(--primary);font-size:.78rem;font-weight:600;flex-shrink:0}
+
+/* ===== Board list (인벤식) ===== */
+.board-head{padding:16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.board-head .desc{min-width:0}
+.board-head h2{font-size:1.15rem;font-weight:800}
+.board-head .desc{color:var(--sub);font-size:.85rem}
+.board-head .bh-write{
+  margin-left:auto;background:var(--primary);color:#fff;font-weight:700;
+  padding:8px 14px;border-radius:8px;font-size:.88rem;
+}
+.post-row{
+  display:flex;align-items:center;gap:10px;padding:11px 16px;
+  border-bottom:1px solid var(--bg);cursor:pointer;
+}
+.post-row:hover{background:#FCFCFD}
+.post-row .num{width:36px;text-align:center;color:var(--sub);font-size:.8rem;flex-shrink:0}
+.post-row .num.notice-tag{color:var(--primary);font-weight:700}
+.post-row .title-wrap{flex:1;min-width:0;display:flex;align-items:center;gap:6px}
+.post-row .title{
+  font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.post-row:hover .title{color:var(--primary)}
+.post-row .cmt{color:var(--primary);font-size:.8rem;font-weight:700;flex-shrink:0}
+.post-row .author{width:130px;font-size:.82rem;color:#555;flex-shrink:0;display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap}
+.post-row .time{width:50px;font-size:.78rem;color:var(--sub);text-align:center;flex-shrink:0}
+.post-row .views,.post-row .likes{width:44px;font-size:.78rem;color:var(--sub);text-align:center;flex-shrink:0}
+.post-row .likes{color:var(--primary)}
+.list-cols{
+  display:flex;gap:10px;padding:8px 16px;border-bottom:1px solid var(--line);
+  font-size:.75rem;color:var(--sub);background:#FAFAFB;
+}
+.list-cols .c-num{width:36px;text-align:center}
+.list-cols .c-title{flex:1}
+.list-cols .c-author{width:130px}
+.list-cols .c-time{width:50px;text-align:center}
+.list-cols .c-views,.list-cols .c-likes{width:44px;text-align:center}
+.badge{
+  font-size:.66rem;font-weight:700;padding:1px 5px;border-radius:4px;flex-shrink:0;
+}
+.badge.teacher{background:#EAF1FD;color:var(--teacher)}
+.badge.pastor{background:#FBEAE8;color:var(--pastor)}
+.badge.hot-badge{background:var(--primary);color:#fff}
+.badge.origin{background:#F0F0F3;color:#555}
+
+/* ===== Post detail ===== */
+.post-detail{padding:20px}
+.pd-board{font-size:.82rem;color:var(--primary);font-weight:700;cursor:pointer;margin-bottom:6px;display:inline-block}
+.pd-title{font-size:1.3rem;font-weight:800;margin-bottom:10px}
+.pd-meta{display:flex;align-items:center;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--line);font-size:.85rem;color:var(--sub)}
+.pd-meta .author{color:var(--text);font-weight:600;display:flex;align-items:center;gap:4px}
+.pd-body{padding:18px 0;font-size:.98rem;white-space:pre-line;min-height:80px}
+.pd-actions{display:flex;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.act-btn{
+  display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;
+  border:1px solid var(--line);font-size:.88rem;font-weight:600;color:#555;background:var(--card);
+}
+.act-btn:hover{border-color:var(--primary);color:var(--primary)}
+.act-btn.on{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.cmt-count{font-weight:700;padding:14px 0 6px;font-size:.95rem}
+.cmt-count span{color:var(--primary)}
+.comment{padding:11px 0;border-bottom:1px solid var(--bg)}
+.comment .ch{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.comment .ca{font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:4px}
+.comment .ct{font-size:.75rem;color:var(--sub)}
+.comment .cb{font-size:.92rem}
+.comment.reply{margin-left:24px;background:#FAFAFB;padding:10px 12px;border-radius:8px;border:none;margin-bottom:6px}
+.cmt-form{display:flex;gap:8px;margin-top:12px}
+.cmt-form input{
+  flex:1;border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none;font-size:.92rem;
+}
+.cmt-form input:focus{border-color:var(--primary)}
+.cmt-form button{
+  background:var(--primary);color:#fff;font-weight:700;padding:0 18px;border-radius:8px;font-size:.9rem;
+}
+.back-link{font-size:.85rem;color:var(--sub);margin-bottom:10px;cursor:pointer;display:inline-block}
+.back-link:hover{color:var(--primary)}
+
+/* ===== Write ===== */
+.write-form{padding:20px;display:flex;flex-direction:column;gap:12px}
+.write-form select,.write-form input,.write-form textarea{
+  border:1px solid var(--line);border-radius:8px;padding:11px 12px;outline:none;
+}
+.write-form select:focus,.write-form input:focus,.write-form textarea:focus{border-color:var(--primary)}
+.write-form textarea{min-height:220px;resize:vertical;line-height:1.6}
+.write-submit{
+  background:var(--primary);color:#fff;font-weight:700;padding:12px;border-radius:8px;font-size:1rem;
+}
+
+/* ===== Prayer ===== */
+.prayer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.prayer-card{padding:16px;display:flex;flex-direction:column;gap:8px}
+.prayer-card .ph{display:flex;align-items:center;gap:8px}
+.prayer-card .pa{font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:4px}
+.prayer-card .pt{font-size:.75rem;color:var(--sub);margin-left:auto}
+.prayer-card .pb{font-size:.93rem;flex:1}
+.pray-btn{
+  align-self:flex-start;display:flex;align-items:center;gap:6px;
+  border:1px solid var(--line);border-radius:20px;padding:6px 14px;
+  font-size:.85rem;font-weight:600;color:#555;background:var(--card);
+}
+.pray-btn:hover{border-color:var(--primary);color:var(--primary)}
+.pray-btn.on{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.prayer-form{padding:16px;display:flex;gap:8px;margin-bottom:12px}
+.prayer-form input{
+  flex:1;border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none;font-size:.92rem;
+}
+.prayer-form input:focus{border-color:var(--primary)}
+.prayer-form button{background:var(--primary);color:#fff;font-weight:700;padding:0 16px;border-radius:8px}
+
+/* ===== Calendar ===== */
+.cal-head{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px}
+.cal-head h2{font-size:1.1rem;font-weight:800}
+.cal-head button{font-size:1.1rem;color:var(--sub);padding:4px 10px;border-radius:8px}
+.cal-head button:hover{background:var(--bg)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--line)}
+.cal-dow{padding:8px;text-align:center;font-size:.78rem;color:var(--sub);font-weight:600;border-bottom:1px solid var(--line)}
+.cal-dow:first-child{color:var(--primary)}
+.cal-cell{
+  min-height:74px;padding:6px;border-bottom:1px solid var(--bg);border-right:1px solid var(--bg);
+  font-size:.8rem;
+}
+.cal-cell:nth-child(7n+1) .d{color:var(--primary)}
+.cal-cell .d{font-weight:600;color:#555}
+.cal-cell.today .d{
+  background:var(--primary);color:#fff;border-radius:50%;
+  width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;
+}
+.cal-ev{
+  margin-top:3px;background:var(--primary-soft);color:var(--primary);
+  font-size:.68rem;font-weight:600;padding:2px 5px;border-radius:5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.event-list{padding:14px 16px}
+.event-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--bg);align-items:center}
+.event-item:last-child{border:none}
+.event-item .ed{
+  background:var(--bg);border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0;min-width:54px;
+}
+.event-item .ed .m{font-size:.68rem;color:var(--sub)}
+.event-item .ed .dd{font-weight:800;font-size:1.05rem;color:var(--primary)}
+.event-item .et{font-weight:600;font-size:.92rem}
+.event-item .es{font-size:.78rem;color:var(--sub)}
+
+/* ===== Attendance ===== */
+.att-hero{padding:22px;text-align:center}
+.att-hero .streak{font-size:1.5rem;font-weight:900;color:var(--primary)}
+.att-hero p{color:var(--sub);font-size:.88rem;margin-top:4px}
+.att-check-btn{
+  margin-top:14px;background:var(--primary);color:#fff;font-weight:800;
+  padding:13px 40px;border-radius:30px;font-size:1.05rem;
+}
+.att-check-btn:disabled{background:#ccc;cursor:default}
+.att-weeks{padding:16px}
+.att-week-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bg)}
+.att-week-row:last-child{border:none}
+.att-week-row .w{font-size:.88rem;font-weight:600;flex:1}
+.att-week-row .s{font-size:.8rem;color:var(--sub)}
+.att-mark{
+  width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;background:var(--bg);color:var(--sub);
+}
+.att-mark.on{background:var(--primary);color:#fff}
+
+/* ===== Section heading ===== */
+.view-title{font-size:1.25rem;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.view-title .sub{font-size:.85rem;color:var(--sub);font-weight:500}
+
+/* ===== Admin ===== */
+.admin-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.admin-tabs button{
+  padding:9px 18px;border-radius:8px;border:1px solid var(--line);
+  background:var(--card);font-weight:600;font-size:.92rem;color:var(--sub);
+}
+.admin-tabs button.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.stat-card{padding:20px;text-align:center}
+.stat-card .sv{font-size:1.8rem;font-weight:900;color:var(--primary)}
+.stat-card .sk{font-size:.85rem;color:var(--sub);margin-top:2px}
+.table-scroll{overflow-x:auto}
+.admin-table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:560px}
+.admin-table th{
+  background:#FAFAFB;color:var(--sub);font-size:.78rem;font-weight:600;
+  padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+.admin-table td{padding:10px 14px;border-bottom:1px solid var(--bg);vertical-align:middle}
+.admin-table select{border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:.85rem;outline:none}
+.admin-table .t-title{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.admin-table .t-title:hover{color:var(--primary)}
+.del-btn{color:var(--pastor);border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:.8rem;font-weight:600;background:var(--card)}
+.del-btn:hover{background:#FBEAE8;border-color:var(--pastor)}
+.pin-btn{border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:.8rem;font-weight:600;color:var(--sub);background:var(--card)}
+.pin-btn.on{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.att-toggle{
+  width:26px;height:26px;border-radius:50%;background:var(--bg);color:var(--sub);
+  font-size:.75rem;display:inline-flex;align-items:center;justify-content:center;
+}
+.att-toggle.on{background:var(--primary);color:#fff}
+.status-pill{font-size:.74rem;font-weight:700;padding:3px 9px;border-radius:10px;white-space:nowrap}
+.status-pill.ok{background:#E8F6EC;color:#27AE60}
+.status-pill.wait{background:#FFF4E0;color:#E67E22}
+.approve-btn{background:var(--primary);color:#fff;border-radius:6px;padding:5px 11px;font-size:.8rem;font-weight:700}
+.team-pill{
+  border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-size:.78rem;
+  font-weight:600;color:var(--sub);background:var(--card);white-space:nowrap;
+}
+.team-pill.on{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.admin-section-title{font-size:.95rem;font-weight:700;padding:14px 16px;border-bottom:1px solid var(--line)}
+.persona-select{
+  border:none;background:none;font-weight:600;font-size:.9rem;outline:none;cursor:pointer;
+  max-width:150px;font-family:inherit;color:var(--text);
+}
+
+/* ===== 학생관리 (케어 알림 + 모달) ===== */
+.care-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.care-card{padding:16px}
+.care-card h4{font-size:.92rem;font-weight:700;margin-bottom:8px}
+.care-card h4 .n{color:var(--primary)}
+.care-person{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--bg);cursor:pointer}
+.care-person:last-child{border:none}
+.care-person:hover b{color:var(--primary)}
+.cp-sub{color:var(--sub);font-size:.78rem;margin-left:4px}
+.cp-note{font-size:.8rem;color:var(--sub);margin-top:1px}
+.cp-empty{color:var(--sub);font-size:.85rem;padding:8px 0}
+.care-badge{font-size:.66rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:3px;white-space:nowrap}
+.care-badge.sick{background:#FFF4E0;color:#E67E22}
+.care-badge.new{background:#E8F6EC;color:#27AE60}
+.care-badge.watch{background:#FBEAE8;color:var(--pastor)}
+.care-badge.bday{background:#F3E8FD;color:#8E44AD}
+.care-badge.absent{background:#FBEAE8;color:var(--pastor)}
+.modal-bg{
+  position:fixed;inset:0;background:rgba(20,20,25,.5);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.modal{
+  background:var(--card);border-radius:16px;max-width:560px;width:100%;
+  max-height:88vh;overflow-y:auto;padding:24px;
+}
+.modal-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.modal-x{margin-left:auto;font-size:1.05rem;color:var(--sub);padding:6px 10px;border-radius:8px}
+.modal-x:hover{background:var(--bg)}
+.info-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;
+  background:var(--bg);border-radius:10px;padding:14px;font-size:.9rem;
+}
+.info-grid .k{color:var(--sub);margin-right:8px;font-size:.8rem}
+.modal-label{font-weight:700;font-size:.9rem;margin:16px 0 8px}
+.modal select,.modal input[type=text]{
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;font-size:.9rem;
+}
+.memo-item{background:var(--bg);border-radius:8px;padding:8px 12px;font-size:.87rem;margin-bottom:6px}
+.memo-item .d{color:var(--sub);font-size:.75rem;margin-right:6px}
+.att-toggle-lg{width:38px;height:38px;border-radius:10px;font-size:.72rem;flex-direction:column;gap:0}
+@media(max-width:980px){.care-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* ===== 포인트 ===== */
+.points-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+@media(max-width:720px){.points-grid{grid-template-columns:minmax(0,1fr)}}
+.pt-hero{background:linear-gradient(135deg,#8E44AD,#C06BD6);color:#fff;border:none;text-align:center}
+.pt-hero .pv{font-size:2.3rem;font-weight:900}
+.pt-btn{background:#fff;color:#8E44AD;font-weight:800;border-radius:24px;padding:10px 22px;margin-top:12px}
+.pt-btn:disabled{opacity:.55;cursor:default}
+.verse-box{
+  background:var(--bg);border-radius:10px;padding:14px;font-size:1.02rem;line-height:1.7;
+  user-select:none;-webkit-user-select:none;
+}
+.verse-box .ref{color:var(--primary);font-weight:700;font-size:.85rem}
+.pt-rule{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg);font-size:.9rem}
+.pt-rule:last-child{border:none}
+.pt-rule b{color:var(--primary)}
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg)}
+.rank-row:last-child{border:none}
+.rank-row .medal{width:24px;text-align:center;font-weight:800}
+.rank-row .pts{margin-left:auto;font-weight:800;color:var(--primary);white-space:nowrap}
+.shop-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bg)}
+.shop-item .cost{margin-left:auto;font-weight:800;color:var(--primary);white-space:nowrap}
+.shop-item button{background:var(--primary);color:#fff;font-weight:700;border-radius:8px;padding:6px 12px;font-size:.82rem;flex-shrink:0}
+.log-row{display:flex;gap:8px;padding:6px 0;font-size:.85rem;border-bottom:1px solid var(--bg)}
+.log-row:last-child{border:none}
+.log-row .amt{margin-left:auto;font-weight:700;white-space:nowrap}
+.amt.plus{color:#27AE60}
+.amt.minus{color:var(--pastor)}
+
+/* ===== 토스트·알림 ===== */
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:#222;color:#fff;padding:11px 22px;border-radius:26px;font-weight:700;
+  z-index:300;animation:toastup 2.2s forwards;white-space:nowrap;
+}
+@keyframes toastup{0%{opacity:0}15%{opacity:1}80%{opacity:1}100%{opacity:0}}
+.bell{position:relative;font-size:1.15rem;padding:6px;flex-shrink:0}
+.bell-dot{position:absolute;top:4px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--primary)}
+.noti-panel{
+  position:absolute;top:56px;right:16px;width:300px;max-height:380px;overflow-y:auto;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 8px 30px rgba(0,0,0,.12);z-index:90;padding:6px 0;
+}
+.noti-item{padding:9px 14px;font-size:.86rem;border-bottom:1px solid var(--bg)}
+.noti-item:last-child{border:none}
+.noti-item .nd{color:var(--sub);font-size:.72rem;margin-top:2px}
+
+/* ===== 댓글 삭제 · 사진 ===== */
+.cmt-del{margin-left:auto;color:var(--sub);font-size:.76rem;padding:2px 7px;border-radius:5px}
+.cmt-del:hover{background:#FBEAE8;color:var(--pastor)}
+.post-img{max-width:100%;border-radius:10px;margin:12px 0 0;display:block}
+.dday-apply{
+  background:rgba(255,255,255,.25);color:#fff;font-weight:800;border-radius:20px;
+  padding:8px 16px;margin-top:12px;font-size:.88rem;
+}
+.dday-apply:hover{background:rgba(255,255,255,.35)}
+
+/* ===== Mobile ===== */
+.mobile-nav{display:none}
+@media (max-width:1280px){
+  .layout{grid-template-columns:200px minmax(0,1fr) 280px;gap:16px;padding:16px}
+  html{font-size:14px}
+}
+@media (max-width:980px){
+  .layout{grid-template-columns:200px minmax(0,1fr)}
+  #rightbar{display:none}
+}
+@media (max-width:720px){
+  html{font-size:13.5px}
+  .layout{grid-template-columns:minmax(0,1fr);padding:12px;padding-bottom:70px}
+  #leftbar{display:none}
+  .gnb{display:none}
+  .search{display:none}
+  .header-inner{justify-content:space-between}
+  .home-grid,.prayer-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .post-row .views{display:none}
+  .post-row .author{width:auto}
+  .list-cols{display:none}
+  .mobile-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;
+    background:var(--card);border-top:1px solid var(--line);padding:6px 0 10px;
+  }
+  .mobile-nav button{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+    font-size:.68rem;color:var(--sub);font-weight:600;
+  }
+  .mobile-nav button.active{color:var(--primary)}
+  .mobile-nav .ico{font-size:1.25rem}
+}
+.hidden{display:none!important}
+.empty{padding:40px;text-align:center;color:var(--sub);font-size:.9rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo" onclick="showView('home')">
+      <div class="mark">안</div>
+      <div class="name">안천 <span>청소년부</span></div>
+    </div>
+    <nav class="gnb">
+      <button data-nav="home" class="active" onclick="showView('home')">홈</button>
+      <button data-nav="board" onclick="openBoard('free')">게시판</button>
+      <button data-nav="prayer" onclick="showView('prayer')">기도제목</button>
+      <button data-nav="calendar" onclick="showView('calendar')">일정</button>
+      <button data-nav="attendance" onclick="showView('attendance')">출석체크</button>
+      <button data-nav="points" onclick="showView('points')">🎁 포인트</button>
+      <button data-nav="admin" id="adminNavBtn" class="hidden" onclick="showView('admin')">🛠️ 관리</button>
+    </nav>
+    <div class="search">🔍<input id="searchInput" placeholder="게시글 검색" onkeydown="if(event.key==='Enter')doSearch()"></div>
+    <button class="bell" onclick="toggleNoti()" title="알림">🔔<span class="bell-dot hidden" id="bellDot"></span></button>
+    <div class="user-chip" title="프로토타입: 역할을 바꿔가며 화면을 체험해 보세요">
+      <div class="avatar" id="meAvatar">하은</div>
+      <select class="persona-select" id="personaSelect" onchange="switchPersona(this.value)">
+        <option value="hayeun">김하은 (학생·임원단)</option>
+        <option value="seoyeon">박서연 (학생·찬양팀)</option>
+        <option value="teacher">김은혜 (교사)</option>
+        <option value="pastor">이요한 (교역자)</option>
+      </select>
+    </div>
+  </div>
+  <div class="noti-panel hidden" id="notiPanel"></div>
+</header>
+
+<div class="layout">
+
+  <!-- ===== Left sidebar ===== -->
+  <aside id="leftbar">
+    <button class="write-btn" onclick="showView('write')">✏️ 글쓰기</button>
+    <div class="card side-section">
+      <div class="side-title">커뮤니티</div>
+      <div class="side-menu" id="menuCommunity"></div>
+      <div class="side-title" style="margin-top:6px">교회 소식</div>
+      <div class="side-menu" id="menuChurch"></div>
+      <div class="side-title" style="margin-top:6px" id="teamTitle">내 모임 🔒</div>
+      <div class="side-menu" id="menuTeam"></div>
+      <div class="side-title" style="margin-top:6px">바로가기</div>
+      <div class="side-menu">
+        <button onclick="showView('prayer')">🙏 기도제목</button>
+        <button onclick="showView('calendar')">📅 일정</button>
+        <button onclick="showView('attendance')">✅ 출석체크</button>
+        <button onclick="showView('points')">🎁 포인트</button>
+        <button onclick="openSignupModal()">✋ 새가족 가입 신청</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main id="main">
+
+    <!-- 홈 -->
+    <section id="view-home">
+      <div class="hero" id="hero"></div>
+      <div class="notice-banner" id="noticeBanner"></div>
+      <div class="home-grid" id="homeGrid"></div>
+    </section>
+
+    <!-- 게시판 -->
+    <section id="view-board" class="hidden">
+      <div class="card">
+        <div class="board-head" id="boardHead"></div>
+        <div class="list-cols">
+          <div class="c-num">번호</div><div class="c-title">제목</div>
+          <div class="c-author">작성자</div><div class="c-time">시간</div>
+          <div class="c-views">조회</div><div class="c-likes">추천</div>
+        </div>
+        <div id="postList"></div>
+      </div>
+    </section>
+
+    <!-- 글 상세 -->
+    <section id="view-post" class="hidden">
+      <span class="back-link" id="postBack">‹ 목록으로</span>
+      <div class="card post-detail" id="postDetail"></div>
+    </section>
+
+    <!-- 글쓰기 -->
+    <section id="view-write" class="hidden">
+      <div class="view-title">✏️ 글쓰기</div>
+      <div class="card write-form">
+        <select id="wBoard" onchange="updatePinRow()"></select>
+        <label id="pinRow" class="hidden" style="align-items:center;gap:8px;font-size:.92rem;font-weight:600;display:flex">
+          <input type="checkbox" id="wPin"> 📌 공지로 등록 <span style="color:var(--sub);font-weight:400">(찬양팀 콘티, 임원단 공지)</span>
+        </label>
+        <input id="wTitle" placeholder="제목을 입력하세요" maxlength="60">
+        <textarea id="wBody" placeholder="내용을 입력하세요. 따뜻하고 배려있는 글로 함께 좋은 공간을 만들어요 :)"></textarea>
+        <label style="display:flex;align-items:center;gap:10px;font-size:.9rem;color:var(--sub);cursor:pointer">
+          📷 사진 첨부 (선택)
+          <input type="file" id="wImg" accept="image/*" onchange="handleImg(this)" style="font-size:.82rem">
+        </label>
+        <img id="wImgPrev" class="hidden" style="max-width:240px;border-radius:10px" alt="첨부 미리보기">
+        <button class="write-submit" onclick="submitPost()">등록하기</button>
+      </div>
+    </section>
+
+    <!-- 기도제목 -->
+    <section id="view-prayer" class="hidden">
+      <div class="view-title">🙏 기도제목 나눔 <span class="sub">서로의 기도제목을 두고 함께 기도해요</span></div>
+      <div class="card prayer-form">
+        <input id="prayerInput" placeholder="나누고 싶은 기도제목을 적어주세요" onkeydown="if(event.key==='Enter')addPrayer()">
+        <button onclick="addPrayer()">나누기</button>
+      </div>
+      <div class="prayer-grid" id="prayerGrid"></div>
+    </section>
+
+    <!-- 일정 -->
+    <section id="view-calendar" class="hidden">
+      <div class="view-title">📅 청소년부 일정</div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="cal-head">
+          <button onclick="moveMonth(-1)">‹</button>
+          <h2 id="calTitle"></h2>
+          <button onclick="moveMonth(1)">›</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div class="card event-list">
+        <h3 style="font-size:.95rem;font-weight:700;margin-bottom:6px">다가오는 일정</h3>
+        <div id="eventList"></div>
+      </div>
+    </section>
+
+    <!-- 출석체크 -->
+    <section id="view-attendance" class="hidden">
+      <div class="view-title">✅ 출석체크</div>
+      <div class="card att-hero">
+        <div class="streak" id="attStreak"></div>
+        <p>나의 출석 현황을 확인해 보세요</p>
+        <p style="margin-top:10px;font-size:.92rem;color:var(--primary);font-weight:600">출석 체크는 예배 후 담당 선생님이 해 주세요 😊</p>
+      </div>
+      <div class="card att-weeks" style="margin-top:12px">
+        <h3 style="font-size:.95rem;font-weight:700;margin-bottom:6px">6월 출석 현황</h3>
+        <div id="attWeeks"></div>
+      </div>
+    </section>
+
+    <!-- 포인트 -->
+    <section id="view-points" class="hidden">
+      <div class="view-title">🎁 포인트 <span class="sub">활동하고 포인트 모아서 상품 받자!</span></div>
+      <div id="pointsBody"></div>
+    </section>
+
+    <!-- 관리자 -->
+    <section id="view-admin" class="hidden">
+      <div class="view-title">🛠️ 관리자 페이지 <span class="sub">교사·교역자 · 웹 관리자</span></div>
+      <div class="admin-tabs">
+        <button class="active" data-atab="dash" onclick="showAdminTab('dash')">📊 대시보드</button>
+        <button data-atab="students" onclick="showAdminTab('students')">🧑‍🎓 학생관리</button>
+        <button data-atab="members" onclick="showAdminTab('members')">👥 멤버 관리</button>
+        <button data-atab="posts" onclick="showAdminTab('posts')">📝 게시글 관리</button>
+        <button data-atab="banner" onclick="showAdminTab('banner')">🖼️ 배너 관리</button>
+      </div>
+      <div id="adminBody"></div>
+    </section>
+
+    <!-- 검색 결과 -->
+    <section id="view-search" class="hidden">
+      <div class="view-title">🔍 검색 결과 <span class="sub" id="searchInfo"></span></div>
+      <div class="card"><div id="searchList"></div></div>
+    </section>
+
+  </main>
+
+  <!-- ===== Right sidebar ===== -->
+  <aside id="rightbar">
+    <div class="card widget dday">
+      <div class="dd-label">다가오는 행사</div>
+      <div class="dd-title">🏕️ 여름 수련회</div>
+      <div class="dd-count" id="ddayCount"></div>
+      <button class="dday-apply" onclick="openRetreatModal()">🙌 수련회 신청하기</button>
+    </div>
+    <div class="card widget">
+      <h3>⛪ 이번 주 예배 안내</h3>
+      <div class="worship-row"><span class="k">주일예배</span><span class="v">주일 오전 11:00</span></div>
+      <div class="worship-row"><span class="k">장소</span><span class="v">교육관 2층</span></div>
+      <div class="worship-row"><span class="k">말씀</span><span class="v">이요한 전도사</span></div>
+      <div class="worship-row"><span class="k">본문</span><span class="v">시편 23편</span></div>
+    </div>
+    <div class="card widget">
+      <h3>🔥 HOT 게시글 <span class="more" onclick="openBoard('free')">더보기</span></h3>
+      <div id="hotList"></div>
+    </div>
+    <div class="card widget">
+      <h3>✅ 나의 출석 <span class="more" onclick="showView('attendance')">더보기</span></h3>
+      <div class="att-mini" id="attMini"></div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- ===== Mobile bottom nav ===== -->
+<nav class="mobile-nav">
+  <button data-nav="home" class="active" onclick="showView('home')"><span class="ico">🏠</span>홈</button>
+  <button data-nav="board" onclick="openBoard('free')"><span class="ico">📋</span>게시판</button>
+  <button data-nav="write" onclick="showView('write')"><span class="ico">✏️</span>글쓰기</button>
+  <button data-nav="prayer" onclick="showView('prayer')"><span class="ico">🙏</span>기도</button>
+  <button data-nav="points" onclick="showView('points')"><span class="ico">🎁</span>포인트</button>
+</nav>
+
+<div id="modalRoot"></div>
+
+<script>
+/* ================= 데이터 ================= */
+const personaNames = {
+  hayeun:'김하은', seoyeon:'박서연', teacher:'김은혜 선생님', pastor:'이요한 전도사',
+};
+let ME; // 초기화 시 switchPersona로 설정
+
+function isStaff(){ return ME.role !== 'student'; }
+/* 웹페이지 관리자: 교사·교역자 전체 권한, 학생 웹지기는 게시글·배너 관리만 */
+function canAdmin(){ return isStaff() || !!ME.siteAdmin; }
+
+function switchPersona(key){
+  ME = members.find(m=>m.name===personaNames[key]);
+  document.getElementById('personaSelect').value = key;
+  document.getElementById('meAvatar').textContent = ME.name.slice(1,3);
+  document.getElementById('adminNavBtn').classList.toggle('hidden', !canAdmin());
+  initWriteForm();
+  renderSidebar();
+  showView('home');
+}
+
+/* 비공개(팀) 게시판 접근 권한 */
+function canSeeBoard(b){
+  if(!b.private) return true;
+  if(ME.role !== 'student') return true; // 교사·교역자는 전체 열람
+  return (ME.teams||[]).includes(b.private);
+}
+function visibleBoards(){ return boards.filter(canSeeBoard); }
+
+/* 팀 게시판의 공지글은 전체 구성원에게 공개 */
+function isTeamNotice(p){
+  const b = boards.find(x=>x.id===p.board);
+  return !!p.notice && b.group==='team';
+}
+function canSeePost(p){
+  return canSeeBoard(boards.find(x=>x.id===p.board)) || isTeamNotice(p);
+}
+function teamNotices(){ return posts.filter(isTeamNotice); }
+
+let members = [
+  { name:'김하은', role:'student', teams:['leaders'], siteAdmin:true, points:120, cls:'고1 사랑반', school:'안천고 1학년', birthday:'2010-11-02', phone:'010-2311-0412', joined:'2025-03-08', status:'ok', att:[true,false,false,false], lastAttended:'06/07', care:null, careNote:'',
+    memos:[{date:'05/24', text:'수련회 참석 의사 확인. 친구 지수를 데려오고 싶다고 함'}] },
+  { name:'박서연', role:'student', teams:['praise'], points:95, cls:'고1 사랑반', school:'안천고 1학년', birthday:'2010-06-15', phone:'010-8765-2210', joined:'2025-03-08', status:'ok', att:[true,false,false,false], lastAttended:'06/07', care:null, careNote:'', memos:[] },
+  { name:'이준서', role:'student', teams:[], points:30, cls:'고2 소망반', school:'안천고 2학년', birthday:'2009-08-30', phone:'010-3399-1287', joined:'2024-09-15', status:'ok', att:[false,false,false,false], lastAttended:'05/17', care:null, careNote:'',
+    memos:[{date:'06/08', text:'기말고사 준비로 당분간 못 나온다고 연락 옴. 시험 끝나는 6/19 이후 심방 예정'}] },
+  { name:'정민재', role:'student', teams:['praise'], points:80, cls:'중3 기쁨반', school:'안천중 3학년', birthday:'2011-02-14', phone:'010-5512-9034', joined:'2025-01-12', status:'ok', att:[true,false,false,false], lastAttended:'06/07', care:null, careNote:'', memos:[] },
+  { name:'최유진', role:'student', teams:['leaders'], points:60, cls:'중3 기쁨반', school:'안천중 3학년', birthday:'2011-09-21', phone:'010-7401-3358', joined:'2025-01-12', status:'ok', att:[false,false,false,false], lastAttended:'05/31', care:'sick', careNote:'독감 회복 중, 이번 주 전화 심방 예정',
+    memos:[{date:'06/09', text:'어머님과 통화. 거의 회복, 다음 주부터 출석 예정'}] },
+  { name:'김도윤', role:'student', teams:['praise'], points:45, cls:'중2 믿음반', school:'안천중 2학년', birthday:'2012-06-28', phone:'010-6620-4471', joined:'2025-05-02', status:'ok', att:[true,false,false,false], lastAttended:'06/07', care:null, careNote:'', memos:[] },
+  { name:'신예은', role:'student', teams:[], points:0, cls:'중2 믿음반', school:'안천중 2학년', birthday:'2012-03-19', phone:'010-9183-5526', joined:'2026-06-10', status:'wait', att:[false,false,false,false], lastAttended:'-', care:'new', careNote:'첫 정착 케어 필요', memos:[] },
+  { name:'김은혜 선생님', role:'teacher', teams:['leaders'], cls:'고1 사랑반 담임 · 임원단 담당', joined:'2023-02-01', status:'ok', att:[true,false,false,false] },
+  { name:'박성훈 선생님', role:'teacher', teams:['praise'],  cls:'고2 소망반 담임 · 찬양팀 담당', joined:'2023-02-01', status:'ok', att:[true,false,false,false] },
+  { name:'이요한 전도사', role:'pastor',  teams:[],          cls:'청소년부 담당',   joined:'2022-12-01', status:'ok', att:[true,false,false,false] },
+];
+
+const careTypes = { sick:'질병', new:'새가족', watch:'집중관찰' };
+
+function weeksAbsent(s){
+  if(!s.lastAttended || s.lastAttended==='-') return 0;
+  const [m,d] = s.lastAttended.split('/').map(Number);
+  const days = Math.floor((new Date() - new Date(2026, m-1, d)) / 86400000);
+  return Math.floor(days/7);
+}
+
+function careBadges(s){
+  let h = '';
+  if(s.birthday && s.birthday.slice(5,7) === String(new Date().getMonth()+1).padStart(2,'0'))
+    h += '<span class="care-badge bday">🎂생일</span>';
+  if(weeksAbsent(s) >= 3) h += '<span class="care-badge absent">장결</span>';
+  if(s.care) h += `<span class="care-badge ${s.care}">${careTypes[s.care]}</span>`;
+  return h;
+}
+
+const boards = [
+  { id:'free',   name:'자유게시판',   icon:'💬', group:'community', desc:'청소년부 친구들과 자유롭게 이야기해요' },
+  { id:'qna',    name:'신앙 Q&A',     icon:'❓', group:'community', desc:'신앙에 대한 궁금증, 편하게 물어보세요' },
+  { id:'photo',  name:'사진첩',       icon:'📷', group:'community', desc:'예배·행사 사진을 함께 나눠요' },
+  { id:'notice', name:'공지사항',     icon:'📢', group:'church',    desc:'청소년부 공식 공지 (교사·교역자 작성)' },
+  { id:'bulletin',name:'주보·예배안내',icon:'⛪', group:'church',    desc:'매주 주보와 예배 안내' },
+  { id:'praise', name:'찬양팀',  icon:'🎵', group:'team', private:'praise',  desc:'찬양팀 멤버 전용 — 콘티·악보·연습 공지' },
+  { id:'leaders',name:'임원단',  icon:'⭐', group:'team', private:'leaders', desc:'임원단 멤버 전용 — 회의자료·공지' },
+];
+
+function badge(role){
+  if(role==='teacher') return '<span class="badge teacher">교사</span>';
+  if(role==='pastor')  return '<span class="badge pastor">교역자</span>';
+  return '';
+}
+
+let postSeq = 100;
+let posts = [
+  { id:1, board:'notice', notice:true, title:'🏕️ 여름 수련회 신청 안내 (6/21 마감!)', author:'이요한 전도사', role:'pastor', time:'06/08', views:152, likes:24, liked:false,
+    body:'우리 청소년부 여름 수련회가 7월 24일(금)~26일(주일), 가평 수양관에서 열립니다!\n\n주제: "주님과 함께 걷는 길"\n회비: 50,000원 (형제 참석 시 할인)\n신청: 각 반 선생님께 6월 21일(주일)까지\n\n작년보다 더 풍성한 프로그램이 준비되어 있어요. 한 명도 빠짐없이 함께해요! 🙌',
+    comments:[
+      { author:'박서연', role:'student', time:'06/08', body:'와 드디어!! 작년 진짜 재밌었는데 🔥' },
+      { author:'김은혜 선생님', role:'teacher', time:'06/09', body:'우리 반은 전원 참석 목표! 다들 알지? 😊' },
+      { author:'정민재', role:'student', time:'06/09', body:'조 편성은 언제 나와요??' },
+    ]},
+  { id:2, board:'notice', notice:true, title:'이번 주 토요일(6/20) 청소년부 체육대회 안내', author:'김은혜 선생님', role:'teacher', time:'06/10', views:98, likes:15, liked:false,
+    body:'6월 20일 토요일 오후 2시, 교회 옆 안천중학교 운동장에서 체육대회를 합니다!\n\n종목: 피구, 발야구, 이어달리기\n복장: 편한 운동복 + 운동화\n간식과 음료는 교사회에서 준비합니다 🍉',
+    comments:[ { author:'최유진', role:'student', time:'06/10', body:'피구 우승은 저희 조가 가져갑니다' } ]},
+  { id:3, board:'free', title:'이번 수련회 누구누구 가?', author:'박서연', role:'student', time:'10:24', views:45, likes:8, liked:false,
+    body:'수련회 신청한 사람 손!! 🙋‍♀️\n우리 반은 거의 다 가는 것 같던데 다른 반은 어때?',
+    comments:[
+      { author:'정민재', role:'student', time:'10:31', body:'나 감 ㅋㅋ 작년에 못 가서 이번엔 무조건' },
+      { author:'최유진', role:'student', time:'10:45', body:'나도나도~ 같은 조 되면 좋겠다' },
+      { author:'이준서', role:'student', time:'11:02', body:'시험만 끝나면 바로 신청하러 갑니다' },
+    ]},
+  { id:4, board:'free', title:'시험기간인데 다들 공부 잘 돼? ㅠㅠ', author:'이준서', role:'student', time:'06/11', views:62, likes:12, liked:false,
+    body:'다음 주 기말인데 집중이 1도 안 됨...\n다들 어떻게 공부해? 꿀팁 좀 ㅠㅠ',
+    comments:[
+      { author:'김하은', role:'student', time:'06/11', body:'폰을 거실에 두고 공부하면 그나마 좀 됨 ㅋㅋ' },
+      { author:'박성훈 선생님', role:'teacher', time:'06/11', body:'준서야 시험 잘 보라고 기도할게! 끝나고 맛있는 거 먹자 😄' },
+    ]},
+  { id:5, board:'free', title:'주일에 같이 농구할 사람~', author:'정민재', role:'student', time:'06/10', views:38, likes:5, liked:false,
+    body:'예배 끝나고 점심 먹고 농구 한 게임 어때?\n3:3 하게 6명만 모이자', comments:[]},
+  { id:6, board:'qna', title:'기도할 때 자꾸 딴생각이 들어요', author:'최유진', role:'student', time:'06/09', views:71, likes:18, liked:false,
+    body:'기도를 시작하면 5분도 안 돼서 딴생각이 들어요.\n저만 그런가요? 어떻게 하면 집중해서 기도할 수 있을까요?',
+    comments:[
+      { author:'이요한 전도사', role:'pastor', time:'06/09', body:'유진아, 전혀 이상한 게 아니야. 누구나 그래! 짧게라도 소리 내어 기도해 보거나, 기도제목을 적어 놓고 하나씩 기도해 보면 도움이 돼. 이번 주에 같이 더 이야기해 보자 :)' },
+      { author:'김하은', role:'student', time:'06/10', body:'오 나도 적어놓고 하니까 훨씬 나았어!' },
+    ]},
+  { id:7, board:'qna', title:'성경 어디서부터 읽으면 좋아요?', author:'김도윤', role:'student', time:'06/07', views:54, likes:9, liked:false,
+    body:'성경 통독 해보고 싶은데 창세기부터 읽다가 항상 레위기에서 포기해요 ㅋㅋ 순서 추천해 주세요!',
+    comments:[ { author:'김은혜 선생님', role:'teacher', time:'06/07', body:'요한복음 → 마가복음 → 사도행전 순서 추천! 예수님 이야기부터 시작하면 훨씬 재밌어요 📖' } ]},
+  { id:8, board:'photo', title:'지난주 찬양팀 연습 사진 📸', author:'박성훈 선생님', role:'teacher', time:'06/06', views:83, likes:21, liked:false,
+    body:'지난 토요일 찬양팀 연습 현장!\n(프로토타입이라 사진은 준비 중이에요 🙂)\n\n다음 달 찬양팀 새 멤버도 모집합니다. 관심 있는 친구는 댓글!',
+    comments:[ { author:'박서연', role:'student', time:'06/06', body:'저요!!! 건반 가능합니다 🙋‍♀️' } ]},
+  { id:9, board:'bulletin', title:'6월 둘째 주 주보 (6/14)', author:'이요한 전도사', role:'pastor', time:'06/12', views:29, likes:6, liked:false,
+    body:'📋 6월 14일 주일예배 순서\n\n찬양: 청소년부 찬양팀\n말씀: "선한 목자" (시편 23편)\n설교: 이요한 전도사\n광고: 수련회 신청 마감 임박(6/21), 체육대회(6/20)\n\n예배 후 새친구 환영회가 있습니다. 새친구를 데려온 친구에게는 간식 쿠폰을 드려요 🎁', comments:[]},
+  { id:10, board:'praise', notice:true, title:'🎵 6/14 주일 콘티', author:'박서연', role:'student', time:'06/11', views:18, likes:7, liked:false,
+    body:'6월 14일 주일 콘티 공유합니다!\n\n1. 주님의 시간에 (G)\n2. 선하신 목자 (A)\n3. 주가 보이신 생명의 길 (D)\n4. 마침: 축복하노라 (E)\n\n토요일 오후 1시 연습 — 늦지 않게 와주세요!',
+    comments:[
+      { author:'박성훈 선생님', role:'teacher', time:'06/11', body:'콘티 확인! 2번 곡은 Bb로 한 키 올려서 갈게요 🎹' },
+      { author:'정민재', role:'student', time:'06/11', body:'드럼 악보 단톡에 올려주세요~' },
+    ]},
+  { id:11, board:'praise', title:'건반 세컨 자리 지원받습니다', author:'박성훈 선생님', role:'teacher', time:'06/09', views:14, likes:4, liked:false,
+    body:'다음 달부터 건반 세컨 자리가 비어요.\n관심 있는 멤버는 댓글이나 따로 연락 주세요!', comments:[]},
+  { id:12, board:'leaders', notice:true, title:'📌 6월 임원회의 — 6/19(금) 저녁 7시', author:'김하은', role:'student', time:'06/10', views:11, likes:3, liked:false,
+    body:'6월 임원회의 안건 공유합니다.\n\n1. 체육대회(6/20) 최종 준비 점검\n2. 수련회 레크리에이션 기획\n3. 새가족 환영 이벤트 아이디어\n\n장소: 교육관 2층 소그룹실. 회의록은 회의 후 이 게시판에 올릴게요!',
+    comments:[ { author:'최유진', role:'student', time:'06/10', body:'레크 아이디어 몇 개 정리해서 갈게요!' } ]},
+  { id:13, board:'leaders', title:'체육대회 준비 역할 분담표', author:'최유진', role:'student', time:'06/08', views:9, likes:2, liked:false,
+    body:'체육대회 역할 분담 정리했어요.\n\n- 진행/사회: 김하은\n- 음향: 정민재(찬양팀 협조)\n- 간식 배부: 최유진, 김도윤\n- 사진 기록: 박서연\n\n수정할 부분 있으면 댓글로!', comments:[]},
+];
+
+let prayers = [
+  { id:1, author:'김하은', role:'student', time:'06/11', body:'기말고사 기간 동안 불안해하지 않고 평안한 마음으로 공부할 수 있게 해주세요.', count:12, prayed:false },
+  { id:2, author:'정민재', role:'student', time:'06/10', body:'아버지가 요즘 회사 일로 많이 힘드세요. 아버지께 힘 주시고 가정에 평안 주세요.', count:18, prayed:false },
+  { id:3, author:'김은혜 선생님', role:'teacher', time:'06/09', body:'우리 반 아이들이 수련회를 통해 하나님을 인격적으로 만나게 해주세요.', count:23, prayed:false },
+  { id:4, author:'최유진', role:'student', time:'06/08', body:'아직 교회에 나오지 못하는 친구 지수를 위해 기도해 주세요. 수련회에 같이 가고 싶어요.', count:31, prayed:false },
+];
+
+const events = [
+  { date:'2026-06-14', title:'주일예배', sub:'오전 11시 · 교육관 2층' },
+  { date:'2026-06-20', title:'청소년부 체육대회', sub:'오후 2시 · 안천중 운동장' },
+  { date:'2026-06-21', title:'수련회 신청 마감', sub:'각 반 선생님께 제출' },
+  { date:'2026-06-28', title:'찬양팀 정기연습', sub:'오후 1시 · 본당' },
+  { date:'2026-07-24', title:'여름 수련회 (1일차)', sub:'가평 수양관 · 7/24~26' },
+];
+
+const attendance = [
+  { week:'6월 1주 (6/7)',  scripture:'요한복음 10장' },
+  { week:'6월 2주 (6/14)', scripture:'시편 23편', current:true },
+  { week:'6월 3주 (6/21)', scripture:'-' },
+  { week:'6월 4주 (6/28)', scripture:'-' },
+];
+
+/* ================= 네비게이션 ================= */
+const views = ['home','board','post','write','prayer','calendar','attendance','search','admin','points'];
+function showView(name){
+  if(name==='admin' && !canAdmin()){
+    alert('관리자 페이지는 교사·교역자, 웹 관리자만 들어갈 수 있어요!');
+    return;
+  }
+  views.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden', v!==name));
+  document.querySelectorAll('[data-nav]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.nav===name || (name==='post'&&b.dataset.nav==='board'));
+  });
+  document.querySelectorAll('#menuCommunity button,#menuChurch button').forEach(b=>b.classList.remove('active'));
+  if(name==='home') renderHome();
+  if(name==='prayer') renderPrayers();
+  if(name==='calendar') renderCalendar();
+  if(name==='attendance') renderAttendance();
+  if(name==='admin') showAdminTab(currentAdminTab);
+  if(name==='points') renderPoints();
+  window.scrollTo(0,0);
+}
+
+/* ================= 사이드바 ================= */
+function renderSidebar(){
+  const mk = b => `<button id="menu-${b.id}" onclick="openBoard('${b.id}')">${b.icon} ${b.name}<span class="cnt">${posts.filter(p=>p.board===b.id).length}</span></button>`;
+  document.getElementById('menuCommunity').innerHTML = boards.filter(b=>b.group==='community').map(mk).join('');
+  document.getElementById('menuChurch').innerHTML = boards.filter(b=>b.group==='church').map(mk).join('');
+  const myTeams = boards.filter(b=>b.group==='team' && canSeeBoard(b));
+  document.getElementById('teamTitle').classList.toggle('hidden', !myTeams.length);
+  document.getElementById('menuTeam').innerHTML = myTeams.map(mk).join('');
+}
+
+/* ================= 히어로 배너 ================= */
+/* 실제 사진/포스터를 쓰려면 img에 파일 경로나 URL을 넣으세요.
+   예: { img:'images/retreat_poster.jpg', tag:'POSTER', title:'...', sub:'...', postId:1 }
+   img가 없으면 grad(그라데이션) + emoji로 포스터풍 배너를 그립니다. */
+let heroSlides = [
+  { grad:'linear-gradient(118deg,#E94F37 10%,#F2784B 55%,#F7B267)', emoji:'🏕️', tag:'POSTER',
+    title:'2026 여름 수련회 「주님과 함께 걷는 길」', sub:'7/24(금)~26(주일) · 가평 수양관 — 신청 마감 6/21', postId:1 },
+  { grad:'linear-gradient(118deg,#2D6CDF,#5B96EC 60%,#8FBAF3)', emoji:'🏐', tag:'EVENT',
+    title:'청소년부 체육대회', sub:'6/20(토) 오후 2시 · 안천중 운동장 — 피구·발야구·이어달리기', postId:2 },
+  { grad:'linear-gradient(118deg,#27AE60,#52C27D 60%,#8FD9A8)', emoji:'📸', tag:'PHOTO',
+    title:'우리 청소년부, 한 컷!', sub:'단체사진과 행사 사진은 사진첩에서 — 함께한 순간들', boardId:'photo' },
+];
+let heroIdx = 0;
+function renderHero(){
+  const h = document.getElementById('hero');
+  h.innerHTML = heroSlides.map((s,i)=>`
+    <div class="hero-slide ${i===heroIdx?'on':''}"
+      style="${s.img ? `background-image:url('${s.img}')` : `background:${s.grad}`}"
+      onclick="heroClick(${i})">
+      ${s.img ? '' : `<span class="hs-emoji">${s.emoji}</span>`}
+      <div class="hs-body">
+        <span class="hs-tag">${s.tag}</span>
+        <div class="hs-title">${s.title}</div>
+        <div class="hs-sub">${s.sub}</div>
+      </div>
+    </div>`).join('')
+  + `<button class="hero-arrow l" onclick="event.stopPropagation();heroGo(heroIdx-1)">‹</button>
+     <button class="hero-arrow r" onclick="event.stopPropagation();heroGo(heroIdx+1)">›</button>
+     <div class="hero-nav">${heroSlides.map((_,i)=>
+       `<span class="hero-dot ${i===heroIdx?'on':''}" onclick="event.stopPropagation();heroGo(${i})"></span>`).join('')}</div>`;
+}
+function heroGo(i){
+  heroIdx = (i + heroSlides.length) % heroSlides.length;
+  renderHero();
+}
+function heroClick(i){
+  const s = heroSlides[i];
+  if(s.postId) openPost(s.postId);
+  else if(s.boardId) openBoard(s.boardId);
+}
+setInterval(()=>{ // 5초마다 자동 전환 (홈이 보일 때만)
+  const home = document.getElementById('view-home');
+  if(home && !home.classList.contains('hidden')) heroGo(heroIdx+1);
+}, 5000);
+
+/* ================= 홈 ================= */
+function renderHome(){
+  renderHero();
+  const n = posts.filter(p=>p.notice)[0];
+  const banner = document.getElementById('noticeBanner');
+  banner.classList.toggle('hidden', !n);
+  if(n){
+    banner.innerHTML = `<span class="tag">공지</span><span class="txt">${n.title}</span>`;
+    banner.onclick = ()=>openPost(n.id);
+  }
+
+  document.getElementById('homeGrid').innerHTML = visibleBoards().map(b=>{
+    let pool = posts.filter(p=>p.board===b.id);
+    if(b.id==='notice') pool = [...pool, ...teamNotices()]; // 팀 공지 포함
+    const list = pool.slice().reverse().slice(0,4);
+    const items = list.map(p=>
+      `<div class="bp-item" onclick="openPost(${p.id})">
+        <span class="t">${p.title}</span>
+        ${p.comments.length?`<span class="c">[${p.comments.length}]</span>`:''}
+        <span class="meta">${p.time}</span>
+      </div>`).join('') || '<div class="bp-item" style="color:var(--sub)">아직 글이 없어요</div>';
+    return `<div class="card board-preview">
+      <h3 onclick="openBoard('${b.id}')">${b.icon} ${b.name}<span class="arr">더보기 ›</span></h3>${items}
+    </div>`;
+  }).join('');
+  renderHot(); renderDday(); renderAttMini();
+}
+
+function renderHot(){
+  const hot = posts.filter(canSeePost).slice().sort((a,b)=>b.likes-a.likes).slice(0,5);
+  document.getElementById('hotList').innerHTML = hot.map((p,i)=>
+    `<div class="hot-item" onclick="openPost(${p.id})">
+      <span class="rank">${i+1}</span><span class="t">${p.title}</span><span class="lk">♥ ${p.likes}</span>
+    </div>`).join('');
+}
+
+function renderDday(){
+  const d = Math.ceil((new Date('2026-07-24') - new Date())/86400000);
+  document.getElementById('ddayCount').textContent = 'D-'+d;
+}
+
+function renderAttMini(){
+  const my = members[0].att;
+  document.getElementById('attMini').innerHTML = attendance.map((a,i)=>
+    `<div class="att-dot ${my[i]?'on':''}"><span>${a.week.split(' ')[1]}</span><span>${my[i]?'✓':'·'}</span></div>`).join('');
+}
+
+/* ================= 게시판 ================= */
+let currentBoard = 'free';
+function openBoard(id){
+  const b = boards.find(x=>x.id===id);
+  if(!canSeeBoard(b)){
+    alert(`${b.name} 게시판은 소속 멤버만 볼 수 있어요 🔒`);
+    return;
+  }
+  currentBoard = id;
+  showView('board');
+  const mb = document.getElementById('menu-'+id);
+  if(mb) mb.classList.add('active');
+  document.getElementById('boardHead').innerHTML =
+    `<h2>${b.icon} ${b.name}${b.private?' <span style="font-size:.72rem;color:var(--sub);font-weight:600;vertical-align:middle">🔒 멤버 전용</span>':''}</h2><span class="desc">${b.desc}</span>
+     <button class="bh-write" onclick="showView('write');document.getElementById('wBoard').value='${id}'">글쓰기</button>`;
+  let list = posts.filter(p=>p.board===id).slice().reverse();
+  if(id==='notice') list = [...teamNotices().slice().reverse(), ...list]; // 팀 공지를 전체 공지에 합류
+  document.getElementById('postList').innerHTML = list.length ? list.map((p,i)=>
+    `<div class="post-row" onclick="openPost(${p.id})">
+      <span class="num ${p.notice?'notice-tag':''}">${p.notice?'공지':list.length-i}</span>
+      <div class="title-wrap">
+        ${p.board!==id?`<span class="badge origin">${boards.find(x=>x.id===p.board).icon} ${boards.find(x=>x.id===p.board).name}</span>`:''}
+        ${p.likes>=15?'<span class="badge hot-badge">HOT</span>':''}
+        <span class="title">${p.title}</span>
+        ${p.comments.length?`<span class="cmt">[${p.comments.length}]</span>`:''}
+      </div>
+      <span class="author">${p.author}${badge(p.role)}</span>
+      <span class="time">${p.time}</span>
+      <span class="views">${p.views}</span>
+      <span class="likes">${p.likes}</span>
+    </div>`).join('') : '<div class="empty">아직 글이 없어요. 첫 글을 남겨보세요!</div>';
+}
+
+/* ================= 글 상세 ================= */
+let currentPost = null;
+function openPost(id){
+  const p = posts.find(x=>x.id===id);
+  if(!p) return;
+  if(!canSeePost(p)){
+    const b = boards.find(x=>x.id===p.board);
+    alert(`${b.name} 게시판은 소속 멤버만 볼 수 있어요 🔒`);
+    return;
+  }
+  currentPost = p;
+  p.views++;
+  showView('post');
+  document.getElementById('postBack').onclick = ()=>openBoard(p.board);
+  renderPostDetail();
+}
+
+function renderPostDetail(){
+  const p = currentPost;
+  const b = boards.find(x=>x.id===p.board);
+  const cmts = p.comments.map((c,i)=>
+    `<div class="comment">
+      <div class="ch"><span class="ca">${c.author}${badge(c.role)}</span><span class="ct">${c.time}</span>
+        ${canModerate()?`<button class="cmt-del" title="댓글 삭제 (관리자)" onclick="deleteComment(${i})">✕ 삭제</button>`:''}</div>
+      <div class="cb">${c.body}</div>
+    </div>`).join('');
+  document.getElementById('postDetail').innerHTML = `
+    <span class="pd-board" onclick="openBoard('${b.id}')">${b.icon} ${b.name} ›</span>
+    ${!canSeeBoard(b)?`<div style="background:var(--primary-soft);color:var(--primary);font-size:.82rem;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:10px">📢 ${b.name} 게시판의 공지글이라 전체 구성원에게 공개된 글이에요</div>`:''}
+    <div class="pd-title">${p.title}</div>
+    <div class="pd-meta">
+      <span class="author"><span class="avatar">${p.author.slice(0,2)}</span>${p.author}${badge(p.role)}</span>
+      <span>${p.time}</span><span>조회 ${p.views}</span>
+    </div>
+    ${p.img?`<img class="post-img" src="${p.img}" alt="첨부 사진">`:''}
+    <div class="pd-body">${p.body}</div>
+    <div class="pd-actions">
+      <button class="act-btn ${p.liked?'on':''}" onclick="toggleLike()">👍 좋아요 ${p.likes}</button>
+      <button class="act-btn" onclick="alert('프로토타입에서는 준비 중인 기능이에요 :)')">🔗 공유</button>
+    </div>
+    <div class="cmt-count">댓글 <span>${p.comments.length}</span></div>
+    ${cmts || '<div class="empty" style="padding:20px">첫 댓글을 남겨보세요!</div>'}
+    <div class="cmt-form">
+      <input id="cmtInput" placeholder="따뜻한 댓글을 남겨주세요 :)" onkeydown="if(event.key==='Enter')addComment()">
+      <button onclick="addComment()">등록</button>
+    </div>`;
+}
+
+function toggleLike(){
+  const p = currentPost;
+  p.liked = !p.liked;
+  p.likes += p.liked ? 1 : -1;
+  renderPostDetail();
+}
+
+function addComment(){
+  const inp = document.getElementById('cmtInput');
+  const v = inp.value.trim();
+  if(!v) return;
+  currentPost.comments.push({ author:ME.name, role:ME.role, time:'방금', body:v });
+  addPoints(ME, '댓글 작성', 3);
+  renderPostDetail();
+  renderSidebar();
+}
+
+/* 댓글 삭제: 교사·교역자·웹 관리자 */
+function canModerate(){ return isStaff() || !!ME.siteAdmin; }
+function deleteComment(i){
+  if(!confirm('이 댓글을 삭제할까요?')) return;
+  currentPost.comments.splice(i,1);
+  renderPostDetail();
+}
+
+/* ================= 글쓰기 ================= */
+function initWriteForm(){
+  const staff = ME.role !== 'student';
+  document.getElementById('wBoard').innerHTML = boards
+    .filter(b=>b.group==='community' || (b.group==='church' && staff) || (b.group==='team' && canSeeBoard(b)))
+    .map(b=>`<option value="${b.id}">${b.icon} ${b.name}${b.private?' 🔒':''}</option>`).join('')
+    + (staff ? '' : `<option value="notice" disabled>📢 공지사항 (교사·교역자 전용)</option>`);
+  updatePinRow();
+}
+
+/* 팀 게시판 공지(콘티 등) 등록 권한: 해당 팀 소속이거나 교사·교역자 */
+function updatePinRow(){
+  const b = boards.find(x=>x.id===document.getElementById('wBoard').value);
+  const can = !!(b && b.private && (ME.role!=='student' || (ME.teams||[]).includes(b.private)));
+  document.getElementById('pinRow').classList.toggle('hidden', !can);
+  if(!can) document.getElementById('wPin').checked = false;
+}
+function submitPost(){
+  const board = document.getElementById('wBoard').value;
+  const title = document.getElementById('wTitle').value.trim();
+  const body  = document.getElementById('wBody').value.trim();
+  if(!title){ alert('제목을 입력해 주세요!'); return; }
+  if(!body){ alert('내용을 입력해 주세요!'); return; }
+  const pin = board==='notice' || document.getElementById('wPin').checked;
+  const newPost = { id:++postSeq, board, title, body, author:ME.name, role:ME.role, time:'방금', views:1, likes:0, liked:false, comments:[], notice:pin };
+  if(pendingImg){ newPost.img = pendingImg; pendingImg = null; }
+  posts.push(newPost);
+  document.getElementById('wTitle').value='';
+  document.getElementById('wBody').value='';
+  document.getElementById('wPin').checked=false;
+  document.getElementById('wImg').value='';
+  document.getElementById('wImgPrev').classList.add('hidden');
+  addPoints(ME, '게시글 작성', 10);
+  if(pin) addNoti(`📢 새 공지: ${title}`, false);
+  renderSidebar();
+  openBoard(board);
+}
+
+/* ================= 기도제목 ================= */
+function renderPrayers(){
+  document.getElementById('prayerGrid').innerHTML = prayers.slice().reverse().map(p=>
+    `<div class="card prayer-card">
+      <div class="ph"><span class="avatar">${p.author.slice(0,2)}</span><span class="pa">${p.author}${badge(p.role)}</span><span class="pt">${p.time}</span></div>
+      <div class="pb">${p.body}</div>
+      <button class="pray-btn ${p.prayed?'on':''}" onclick="pray(${p.id})">🙏 함께 기도해요 <b>${p.count}</b></button>
+    </div>`).join('');
+}
+function pray(id){
+  const p = prayers.find(x=>x.id===id);
+  p.prayed = !p.prayed;
+  p.count += p.prayed ? 1 : -1;
+  renderPrayers();
+}
+function addPrayer(){
+  const inp = document.getElementById('prayerInput');
+  const v = inp.value.trim();
+  if(!v) return;
+  prayers.push({ id:prayers.length+1, author:ME.name, role:ME.role, time:'방금', body:v, count:0, prayed:false });
+  inp.value='';
+  addPoints(ME, '기도제목 나눔', 5);
+  renderPrayers();
+}
+
+/* ================= 일정 ================= */
+let calY = 2026, calM = 5; // 0-indexed June
+function moveMonth(d){
+  calM += d;
+  if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;}
+  renderCalendar();
+}
+function renderCalendar(){
+  document.getElementById('calTitle').textContent = `${calY}년 ${calM+1}월`;
+  const first = new Date(calY,calM,1).getDay();
+  const days = new Date(calY,calM+1,0).getDate();
+  const today = new Date();
+  let html = ['일','월','화','수','목','금','토'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html += '<div class="cal-cell"></div>';
+  for(let d=1;d<=days;d++){
+    const ds = `${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evs = events.filter(e=>e.date===ds).map(e=>`<div class="cal-ev">${e.title}</div>`).join('');
+    const isToday = today.getFullYear()===calY && today.getMonth()===calM && today.getDate()===d;
+    html += `<div class="cal-cell ${isToday?'today':''}"><span class="d">${d}</span>${evs}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+
+  const upcoming = events.filter(e=>new Date(e.date) >= new Date(new Date().toDateString()));
+  document.getElementById('eventList').innerHTML = upcoming.map(e=>{
+    const dt = new Date(e.date);
+    return `<div class="event-item">
+      <div class="ed"><div class="m">${dt.getMonth()+1}월</div><div class="dd">${dt.getDate()}</div></div>
+      <div><div class="et">${e.title}</div><div class="es">${e.sub}</div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ================= 출석체크 ================= */
+function renderAttendance(){
+  const my = members[0].att;
+  const streakN = 4 + (my[0] ? 1 + (my[1]?1:0) : 0);
+  document.getElementById('attStreak').textContent =
+    my[0] ? `🔥 ${streakN}주 연속 출석 중!` : `이번 달 출석 ${my.filter(Boolean).length}회`;
+  document.getElementById('attWeeks').innerHTML = attendance.map((a,i)=>
+    `<div class="att-week-row">
+      <span class="att-mark ${my[i]?'on':''}">${my[i]?'✓':'·'}</span>
+      <span class="w">${a.week}${a.current?' <span style="color:var(--primary);font-size:.75rem">이번 주</span>':''}</span>
+      <span class="s">${a.scripture}</span>
+    </div>`).join('');
+}
+
+/* ================= 관리자 ================= */
+let currentAdminTab = 'dash';
+const staffOnlyTabs = ['students','members']; // 학생 개인정보가 있어 교사·교역자 전용
+function showAdminTab(tab){
+  if(staffOnlyTabs.includes(tab) && !isStaff()) tab = 'dash';
+  currentAdminTab = tab;
+  document.querySelectorAll('[data-atab]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.atab===tab);
+    b.classList.toggle('hidden', staffOnlyTabs.includes(b.dataset.atab) && !isStaff());
+  });
+  const el = document.getElementById('adminBody');
+  if(tab==='dash')     el.innerHTML = adminDash();
+  if(tab==='students') el.innerHTML = adminStudents();
+  if(tab==='members')  el.innerHTML = adminMembers();
+  if(tab==='posts')    el.innerHTML = adminPosts();
+  if(tab==='banner')   el.innerHTML = adminBanner();
+}
+
+function adminDash(){
+  const totalCmts = posts.reduce((s,p)=>s+p.comments.length,0);
+  const students = members.filter(m=>m.role==='student' && m.status==='ok');
+  const rate = Math.round(students.filter(m=>m.att[0]).length / students.length * 100);
+  const wait = members.filter(m=>m.status==='wait');
+  const recent = posts.slice().reverse().slice(0,5);
+  return `
+  <div class="stat-grid">
+    <div class="card stat-card"><div class="sv">${members.length}</div><div class="sk">전체 멤버</div></div>
+    <div class="card stat-card"><div class="sv">${posts.length}</div><div class="sk">전체 게시글</div></div>
+    <div class="card stat-card"><div class="sv">${totalCmts}</div><div class="sk">전체 댓글</div></div>
+    <div class="card stat-card"><div class="sv">${rate}%</div><div class="sk">지난주 출석률 (6/7)</div></div>
+  </div>
+  ${!isStaff() ? `<div class="card" style="padding:12px 16px;margin-bottom:16px;font-size:.88rem;color:var(--sub)">
+    🛠️ <b style="color:var(--text)">웹 관리자</b> 권한으로 접속 중 — 게시글·배너 관리를 할 수 있어요. 학생관리·멤버 관리는 교사·교역자 전용입니다.</div>` : `
+  <div class="card" style="margin-bottom:16px">
+    <div class="admin-section-title">⏳ 가입 승인 대기 (${wait.length})</div>
+    ${wait.length ? wait.map(m=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bg)">
+        <span class="avatar">${m.name.slice(1,3)}</span><b>${m.name}</b>
+        <span style="color:var(--sub);font-size:.85rem">${m.cls} · ${m.joined} 신청</span>
+        <button class="approve-btn" style="margin-left:auto" onclick="approveMember('${m.name}')">승인</button>
+      </div>`).join('')
+    : '<div class="empty" style="padding:20px">대기 중인 멤버가 없어요</div>'}
+  </div>`}
+  <div class="card">
+    <div class="admin-section-title">🕐 최근 게시글</div>
+    <div style="padding:6px 0">
+    ${recent.map(p=>`<div class="bp-item" style="padding:8px 16px" onclick="openPost(${p.id})">
+      <span class="t">${p.title}</span><span class="meta">${p.author} · ${p.time}</span></div>`).join('')}
+    </div>
+  </div>
+  ${isStaff()?`
+  <div class="card" style="margin-top:16px">
+    <div class="admin-section-title">🏕️ 수련회 신청 현황 (${retreatApps.length}명)</div>
+    ${retreatApps.length ? retreatApps.map(a=>`
+      <div style="display:flex;gap:10px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--bg);flex-wrap:wrap">
+        <b>${a.name}</b><span style="color:var(--sub);font-size:.85rem">${a.cls} · ${a.date} 신청</span>
+        ${a.note?`<span style="font-size:.8rem;color:var(--sub)">💬 ${a.note}</span>`:''}
+        <span class="status-pill ${a.fee?'ok':'wait'}" style="margin-left:auto">${a.fee?'회비 납부':'회비 미납'}</span>
+      </div>`).join('') : '<div class="empty" style="padding:16px">아직 신청자가 없어요</div>'}
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="admin-section-title">🎁 포인트 교환 신청 (대기 ${redemptions.filter(r=>r.status==='pending').length})</div>
+    ${redemptions.length ? redemptions.map((r,i)=>`
+      <div style="display:flex;gap:10px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--bg)">
+        <b>${r.name}</b><span>${r.item}</span><span style="color:var(--sub);font-size:.8rem">${r.date}</span>
+        ${r.status==='pending'
+          ?`<button class="approve-btn" style="margin-left:auto" onclick="redeemDone(${i})">지급 완료</button>`
+          :'<span class="status-pill ok" style="margin-left:auto">지급됨</span>'}
+      </div>`).join('') : '<div class="empty" style="padding:16px">교환 신청이 없어요</div>'}
+  </div>
+  <div style="text-align:right;margin-top:14px">
+    <button class="del-btn" onclick="resetData()">🔄 프로토타입 데이터 초기화</button>
+  </div>`:''}`;
+}
+
+function adminMembers(){
+  const roleName = { student:'학생', teacher:'교사', pastor:'교역자' };
+  return `<div class="card table-scroll"><table class="admin-table">
+  <tr><th>이름</th><th>소속</th><th>가입일</th><th>역할</th><th>소속 모임</th><th>상태</th></tr>
+  ${members.map((m,i)=>`<tr>
+    <td style="white-space:nowrap"><b>${m.name}</b> ${badge(m.role)}</td>
+    <td style="white-space:nowrap">${m.cls}</td>
+    <td>${m.joined}</td>
+    <td><select onchange="changeRole(${i},this.value)">
+      ${Object.entries(roleName).map(([k,v])=>`<option value="${k}" ${m.role===k?'selected':''}>${v}</option>`).join('')}
+    </select></td>
+    <td style="white-space:nowrap">
+      <button class="team-pill ${(m.teams||[]).includes('praise')?'on':''}" onclick="toggleTeam(${i},'praise')">🎵 찬양팀</button>
+      <button class="team-pill ${(m.teams||[]).includes('leaders')?'on':''}" onclick="toggleTeam(${i},'leaders')">⭐ 임원단</button>
+      ${m.role==='student' ? `<button class="team-pill ${m.siteAdmin?'on':''}" onclick="toggleSiteAdmin(${i})" title="게시글·배너 관리 권한">🛠️ 웹 관리자</button>` : ''}
+    </td>
+    <td style="white-space:nowrap">${m.status==='ok'
+      ? '<span class="status-pill ok">활동중</span>'
+      : `<span class="status-pill wait">승인대기</span> <button class="approve-btn" onclick="approveMember('${m.name}')">승인</button>`}</td>
+  </tr>`).join('')}
+  </table></div>`;
+}
+
+function toggleSiteAdmin(i){
+  members[i].siteAdmin = !members[i].siteAdmin;
+  showAdminTab('members');
+  if(members[i]===ME) document.getElementById('adminNavBtn').classList.toggle('hidden', !canAdmin());
+}
+
+function toggleTeam(i, team){
+  const m = members[i];
+  m.teams = m.teams || [];
+  m.teams = m.teams.includes(team) ? m.teams.filter(t=>t!==team) : [...m.teams, team];
+  showAdminTab('members');
+  renderSidebar(); // 본인 소속이 바뀌었을 수 있으니 사이드바 갱신
+}
+
+function adminPosts(){
+  return `<div class="card table-scroll"><table class="admin-table">
+  <tr><th>게시판</th><th>제목</th><th>작성자</th><th>시간</th><th>추천</th><th>공지</th><th></th></tr>
+  ${posts.slice().reverse().map(p=>{
+    const b = boards.find(x=>x.id===p.board);
+    return `<tr>
+      <td style="white-space:nowrap">${b.icon} ${b.name}</td>
+      <td class="t-title" onclick="openPost(${p.id})">${p.title}</td>
+      <td style="white-space:nowrap">${p.author}</td>
+      <td style="white-space:nowrap">${p.time}</td>
+      <td>${p.likes}</td>
+      <td><button class="pin-btn ${p.notice?'on':''}" onclick="toggleNotice(${p.id})">${p.notice?'공지중':'공지로'}</button></td>
+      <td><button class="del-btn" onclick="deletePostAdmin(${p.id})">삭제</button></td>
+    </tr>`;}).join('')}
+  </table></div>`;
+}
+
+function adminStudents(){
+  const students = members.filter(m=>m.role==='student');
+  const thisMonth = String(new Date().getMonth()+1).padStart(2,'0');
+  const bdays  = students.filter(s=>s.birthday.slice(5,7)===thisMonth);
+  const absent = students.filter(s=>weeksAbsent(s)>=3);
+  const cares  = students.filter(s=>s.care);
+  const person = (s, note) => `
+    <div class="care-person" onclick="openStudentModal(${members.indexOf(s)})">
+      <span class="avatar">${s.name.slice(1,3)}</span>
+      <div><b>${s.name}</b><span class="cp-sub">${s.cls}</span><div class="cp-note">${note}</div></div>
+    </div>`;
+  return `
+  <div class="care-grid">
+    <div class="card care-card">
+      <h4>🎂 이번 달 생일 <span class="n">${bdays.length}</span></h4>
+      ${bdays.length ? bdays.map(s=>person(s, s.birthday.slice(5).replace('-','/')+' 생일 — 축하해 주세요!')).join('') : '<div class="cp-empty">이번 달 생일인 친구가 없어요</div>'}
+    </div>
+    <div class="card care-card">
+      <h4>🚨 장기결석 <span class="n">${absent.length}</span></h4>
+      ${absent.length ? absent.map(s=>person(s, `최근 출석 ${s.lastAttended} · ${weeksAbsent(s)}주째 결석 — 연락이 필요해요`)).join('') : '<div class="cp-empty">3주 이상 결석한 친구가 없어요</div>'}
+    </div>
+    <div class="card care-card">
+      <h4>💛 집중케어 <span class="n">${cares.length}</span></h4>
+      ${cares.length ? cares.map(s=>person(s, `${careTypes[s.care]}${s.careNote?' · '+s.careNote:''}`)).join('') : '<div class="cp-empty">집중케어 중인 친구가 없어요</div>'}
+    </div>
+  </div>
+  <div class="card table-scroll">
+    <div class="admin-section-title">학생 명단 · 출석 체크
+      <span style="color:var(--sub);font-weight:400;font-size:.8rem">주차 동그라미를 눌러 출석을 체크하세요</span></div>
+    <table class="admin-table">
+    <tr><th>이름</th><th>반</th><th>학교</th><th>생일</th>
+      ${attendance.map(a=>`<th style="text-align:center">${a.week.match(/\((.*)\)/)[1]}${a.current?'<br><span style="color:var(--primary)">이번주</span>':''}</th>`).join('')}
+      <th style="text-align:center">출석</th><th></th></tr>
+    ${students.map(s=>{
+      const mi = members.indexOf(s);
+      return `<tr>
+        <td style="white-space:nowrap"><b>${s.name}</b>${careBadges(s)}${s.status==='wait'?' <span class="status-pill wait">승인대기</span>':''}</td>
+        <td style="white-space:nowrap">${s.cls}</td>
+        <td style="white-space:nowrap">${s.school}</td>
+        <td style="white-space:nowrap">${s.birthday.slice(5).replace('-','/')}</td>
+        ${s.att.map((on,wi)=>`<td style="text-align:center">
+          <button class="att-toggle ${on?'on':''}" onclick="toggleAttAdmin(${mi},${wi})">${on?'✓':'·'}</button></td>`).join('')}
+        <td style="text-align:center;font-weight:700;color:var(--primary)">${s.att.filter(Boolean).length}회</td>
+        <td><button class="pin-btn" onclick="openStudentModal(${mi})">상세</button></td>
+      </tr>`;}).join('')}
+    </table>
+  </div>`;
+}
+
+/* ----- 학생 상세 모달 ----- */
+function openStudentModal(mi){
+  const s = members[mi];
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="avatar" style="width:46px;height:46px;font-size:14px">${s.name.slice(1,3)}</span>
+        <div>
+          <div style="font-weight:800;font-size:1.15rem">${s.name} ${careBadges(s)}</div>
+          <div style="color:var(--sub);font-size:.85rem">${s.cls} · ${s.school}</div>
+        </div>
+        <button class="modal-x" onclick="closeStudentModal()">✕</button>
+      </div>
+      <div class="info-grid">
+        <div><span class="k">생일</span>${s.birthday}</div>
+        <div><span class="k">연락처</span>${s.phone}</div>
+        <div><span class="k">등록일</span>${s.joined}</div>
+        <div><span class="k">최근 출석</span>${s.lastAttended}</div>
+      </div>
+      <div class="modal-label">이번 달 출석</div>
+      <div style="display:flex;gap:8px">
+        ${s.att.map((on,wi)=>`<button class="att-toggle att-toggle-lg ${on?'on':''}"
+          onclick="toggleAttAdmin(${mi},${wi});openStudentModal(${mi})">
+          <span>${attendance[wi].week.match(/\((.*)\)/)[1]}</span><span>${on?'✓':'·'}</span></button>`).join('')}
+      </div>
+      <div class="modal-label">집중케어 상태</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select onchange="setCare(${mi}, this.value)">
+          <option value="">없음</option>
+          ${Object.entries(careTypes).map(([k,v])=>`<option value="${k}" ${s.care===k?'selected':''}>${v}</option>`).join('')}
+        </select>
+        <input type="text" style="flex:1;min-width:180px" placeholder="케어 메모 (예: 독감 회복 중)"
+          value="${s.careNote||''}" onchange="setCareNote(${mi}, this.value)">
+      </div>
+      <div class="modal-label">심방·상담 기록</div>
+      ${s.memos.length ? s.memos.map(m=>`<div class="memo-item"><span class="d">${m.date}</span>${m.text}</div>`).join('') : '<div class="cp-empty">기록이 없어요</div>'}
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" id="memoInput" style="flex:1" placeholder="새 기록을 남겨주세요"
+          onkeydown="if(event.key==='Enter')addStudentMemo(${mi})">
+        <button class="approve-btn" onclick="addStudentMemo(${mi})">추가</button>
+      </div>
+    </div>
+  </div>`;
+}
+function closeStudentModal(){ document.getElementById('modalRoot').innerHTML=''; }
+function setCare(mi, val){
+  members[mi].care = val || null;
+  showAdminTab('students'); openStudentModal(mi);
+}
+function setCareNote(mi, val){
+  members[mi].careNote = val;
+  showAdminTab('students');
+}
+function addStudentMemo(mi){
+  const inp = document.getElementById('memoInput');
+  const v = inp.value.trim();
+  if(!v) return;
+  const d = new Date();
+  members[mi].memos.unshift({ date:`${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`, text:v });
+  openStudentModal(mi);
+}
+
+function approveMember(name){
+  const m = members.find(x=>x.name===name);
+  if(m) m.status = 'ok';
+  showAdminTab(currentAdminTab);
+}
+function changeRole(i, role){
+  members[i].role = role;
+  showAdminTab('members');
+}
+function toggleNotice(id){
+  const p = posts.find(x=>x.id===id);
+  p.notice = !p.notice;
+  showAdminTab('posts');
+}
+function deletePostAdmin(id){
+  const p = posts.find(x=>x.id===id);
+  if(!confirm(`"${p.title}" 글을 삭제할까요?`)) return;
+  posts = posts.filter(x=>x.id!==id);
+  renderSidebar();
+  showAdminTab('posts');
+}
+/* ----- 배너 관리 ----- */
+const bannerGrads = [
+  'linear-gradient(118deg,#E94F37 10%,#F2784B 55%,#F7B267)',
+  'linear-gradient(118deg,#2D6CDF,#5B96EC 60%,#8FBAF3)',
+  'linear-gradient(118deg,#27AE60,#52C27D 60%,#8FD9A8)',
+  'linear-gradient(118deg,#8E44AD,#A86BC9 60%,#CDA8E3)',
+  'linear-gradient(118deg,#E67E22,#EFA04E 60%,#F5C98A)',
+];
+function adminBanner(){
+  return `
+  <div class="card" style="padding:12px 16px;margin-bottom:16px;font-size:.88rem;color:var(--sub)">
+    홈 화면 상단에 표시되는 배너입니다. 이미지 URL을 넣으면 단체사진·현수막·포스터가 배경으로 깔리고, 비워두면 색상 배경으로 표시돼요.
+  </div>
+  <div class="card table-scroll" style="margin-bottom:16px"><table class="admin-table">
+  <tr><th>순서</th><th>미리보기</th><th>태그</th><th>제목</th><th>부제</th><th>연결</th><th></th></tr>
+  ${heroSlides.map((s,i)=>`<tr>
+    <td style="white-space:nowrap">
+      <button class="pin-btn" onclick="bannerMove(${i},-1)" ${i===0?'disabled':''}>▲</button>
+      <button class="pin-btn" onclick="bannerMove(${i},1)" ${i===heroSlides.length-1?'disabled':''}>▼</button>
+    </td>
+    <td><div style="width:96px;height:42px;border-radius:8px;background:${s.img?`url('${s.img}') center/cover`:s.grad};display:flex;align-items:center;justify-content:center;font-size:1.2rem">${s.img?'':s.emoji||''}</div></td>
+    <td>${s.tag}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${s.title}</b></td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.sub}</td>
+    <td style="white-space:nowrap">${s.postId?`글 #${s.postId}`:s.boardId?boards.find(b=>b.id===s.boardId).name:'-'}</td>
+    <td><button class="del-btn" onclick="bannerDelete(${i})">삭제</button></td>
+  </tr>`).join('')}
+  </table></div>
+  <div class="card" style="padding:18px">
+    <div style="font-weight:700;margin-bottom:12px">➕ 새 배너 추가</div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <input type="text" id="bTag" placeholder="태그 (예: POSTER, EVENT)" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
+      <input type="text" id="bEmoji" placeholder="이모지 (예: 🎄) — 이미지 없을 때 표시" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
+      <input type="text" id="bTitle" placeholder="제목 *" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none;grid-column:1/-1">
+      <input type="text" id="bSub" placeholder="부제 (날짜·장소 등)" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none;grid-column:1/-1">
+      <input type="text" id="bImg" placeholder="이미지 URL (선택 — 단체사진/포스터 파일 경로)" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none;grid-column:1/-1">
+      <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--sub)">
+        또는 📷 사진 파일 업로드:
+        <input type="file" accept="image/*" onchange="handleBannerImg(this)" style="font-size:.8rem">
+        <span id="bImgStatus" style="color:#27AE60;font-weight:600"></span>
+      </div>
+      <select id="bBoard" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
+        <option value="">연결 게시판 없음</option>
+        ${boards.filter(b=>!b.private).map(b=>`<option value="${b.id}">${b.icon} ${b.name}</option>`).join('')}
+      </select>
+      <input type="number" id="bPost" placeholder="연결 게시글 번호 (선택)" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
+    </div>
+    <button class="approve-btn" style="margin-top:12px;padding:10px 22px" onclick="bannerAdd()">배너 추가</button>
+  </div>`;
+}
+function bannerMove(i, dir){
+  const j = i + dir;
+  if(j<0 || j>=heroSlides.length) return;
+  [heroSlides[i], heroSlides[j]] = [heroSlides[j], heroSlides[i]];
+  if(heroIdx===i) heroIdx=j; else if(heroIdx===j) heroIdx=i;
+  showAdminTab('banner');
+}
+function bannerDelete(i){
+  if(!confirm(`"${heroSlides[i].title}" 배너를 삭제할까요?`)) return;
+  heroSlides.splice(i,1);
+  heroIdx = 0;
+  showAdminTab('banner');
+}
+function bannerAdd(){
+  const v = id => document.getElementById(id).value.trim();
+  if(!v('bTitle')){ alert('제목을 입력해 주세요!'); return; }
+  const slide = {
+    tag: v('bTag') || 'NOTICE',
+    emoji: v('bEmoji') || '📌',
+    title: v('bTitle'),
+    sub: v('bSub'),
+    grad: bannerGrads[heroSlides.length % bannerGrads.length],
+  };
+  if(v('bImg')) slide.img = v('bImg');
+  else if(bannerPendingImg){ slide.img = bannerPendingImg; bannerPendingImg = null; }
+  if(v('bPost')) slide.postId = Number(v('bPost'));
+  else if(v('bBoard')) slide.boardId = v('bBoard');
+  heroSlides.push(slide);
+  showAdminTab('banner');
+}
+
+function toggleAttAdmin(mi, wi){
+  const s = members[mi];
+  s.att[wi] = !s.att[wi];
+  if(s.role==='student') addPoints(s, s.att[wi]?'주일예배 출석':'출석 체크 취소', s.att[wi]?20:-20);
+  if(s.att[wi] && s.role==='student'){
+    const d = attendance[wi].week.match(/\((.*)\)/)[1];
+    if(s.lastAttended==='-' || !s.lastAttended) s.lastAttended = d;
+    else s.lastAttended = d; // 프로토타입: 마지막 토글 주차로 갱신
+  }
+  showAdminTab('students');
+}
+
+/* ================= 포인트 시스템 ================= */
+const pointRuleRows = [
+  ['게시글 작성','+10P'], ['댓글 작성','+3P'], ['기도제목 나눔','+5P'],
+  ['웹 출석 (하루 1회)','+5P'], ['말씀 따라쓰기 (하루 1회)','+15P'], ['주일예배 출석 (선생님 체크)','+20P'],
+];
+const verses = [
+  { ref:'시편 23:1', text:'여호와는 나의 목자시니 내게 부족함이 없으리로다' },
+  { ref:'빌립보서 4:13', text:'내게 능력 주시는 자 안에서 내가 모든 것을 할 수 있느니라' },
+  { ref:'잠언 3:5', text:'너는 마음을 다하여 여호와를 신뢰하고 네 명철을 의지하지 말라' },
+  { ref:'요한복음 14:6', text:'내가 곧 길이요 진리요 생명이니 나로 말미암지 않고는 아버지께로 올 자가 없느니라' },
+  { ref:'여호수아 1:9', text:'강하고 담대하라 두려워하지 말며 놀라지 말라 네가 어디로 가든지 네 하나님 여호와가 너와 함께 하느니라' },
+];
+const shopItems = [
+  { emoji:'🍫', name:'매점 간식 쿠폰', cost:50 },
+  { emoji:'☕', name:'카페 음료 쿠폰', cost:120 },
+  { emoji:'🏕️', name:'수련회 회비 5,000원 할인', cost:250 },
+  { emoji:'🎫', name:'문화상품권 5,000원', cost:300 },
+];
+let pointLog = [
+  { name:'김하은', date:'06/11', label:'댓글 작성', amt:3 },
+  { name:'박서연', date:'06/11', label:'게시글 작성 (콘티)', amt:10 },
+  { name:'김하은', date:'06/10', label:'말씀 따라쓰기', amt:15 },
+];
+let redemptions = [
+  { name:'정민재', item:'매점 간식 쿠폰', date:'06/09', status:'done' },
+];
+
+function todayMD(){ const d=new Date(); return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2300);
+}
+
+function addPoints(m, label, amt){
+  if(!m) return;
+  m.points = (m.points||0) + amt;
+  pointLog.unshift({ name:m.name, date:todayMD(), label, amt });
+  if(m===ME && amt>0) showToast(`+${amt}P · ${label} 🎉`);
+}
+
+function renderPoints(){
+  const verse = verses[new Date().getDate() % verses.length];
+  const dailyDone = ME.lastDaily===todayISO();
+  const verseDone = ME.lastVerse===todayISO();
+  const rank = members.filter(m=>m.role==='student' && m.status==='ok')
+    .slice().sort((a,b)=>(b.points||0)-(a.points||0)).slice(0,5);
+  const medals = ['🥇','🥈','🥉','4','5'];
+  const myLog = pointLog.filter(l=>l.name===ME.name).slice(0,8);
+  document.getElementById('pointsBody').innerHTML = `
+  <div class="points-grid">
+   <div>
+    <div class="card widget pt-hero">
+      <div style="opacity:.9;font-size:.9rem">${ME.name}님의 포인트</div>
+      <div class="pv">${ME.points||0}P</div>
+      <button class="pt-btn" onclick="dailyCheck()" ${dailyDone?'disabled':''}>${dailyDone?'오늘 웹 출석 완료 ✓':'📅 오늘의 웹 출석 +5P'}</button>
+    </div>
+    <div class="card widget">
+      <h3>✍️ 오늘의 말씀 따라쓰기 <span class="more">+15P · 하루 1회</span></h3>
+      <div class="verse-box" oncopy="return false" oncontextmenu="return false">
+        <span class="ref">${verse.ref}</span><br>${verse.text}</div>
+      <textarea id="vInput" ${verseDone?'disabled':''}
+        placeholder="${verseDone?'오늘은 완료! 내일 새 구절로 만나요 😊':'위 구절을 그대로 입력해 보세요 (복사·붙여넣기는 안 돼요!)'}"
+        style="width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:10px;min-height:72px;outline:none;font-size:.95rem;resize:vertical"
+        onpaste="event.preventDefault();alert('복사·붙여넣기는 안 돼요! 마음에 새기며 직접 타이핑해 주세요 😉')"
+        ondrop="event.preventDefault()"></textarea>
+      <button class="approve-btn" style="margin-top:8px;padding:9px 18px" onclick="verseSubmit()" ${verseDone?'disabled':''}>제출하기</button>
+    </div>
+    <div class="card widget">
+      <h3>📜 포인트 적립 규칙</h3>
+      ${pointRuleRows.map(r=>`<div class="pt-rule"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}
+    </div>
+   </div>
+   <div>
+    <div class="card widget">
+      <h3>🏆 포인트 랭킹</h3>
+      ${rank.map((m,i)=>`<div class="rank-row"><span class="medal">${medals[i]}</span><span class="avatar">${m.name.slice(1,3)}</span><b>${m.name}</b><span style="color:var(--sub);font-size:.8rem">${m.cls}</span><span class="pts">${m.points||0}P</span></div>`).join('')}
+    </div>
+    <div class="card widget">
+      <h3>🎁 포인트 상점</h3>
+      ${shopItems.map((s,i)=>`<div class="shop-item"><span style="font-size:1.3rem">${s.emoji}</span><b>${s.name}</b><span class="cost">${s.cost}P</span><button onclick="redeem(${i})">교환</button></div>`).join('')}
+      <div style="font-size:.78rem;color:var(--sub);margin-top:8px">교환 신청 후 선생님 확인을 거쳐 지급돼요.</div>
+    </div>
+    <div class="card widget">
+      <h3>🧾 내 적립 내역</h3>
+      ${myLog.length ? myLog.map(l=>`<div class="log-row"><span style="color:var(--sub)">${l.date}</span><span>${l.label}</span><span class="amt ${l.amt>=0?'plus':'minus'}">${l.amt>=0?'+':''}${l.amt}P</span></div>`).join('') : '<div class="cp-empty">아직 내역이 없어요 — 글을 쓰고 출석해 보세요!</div>'}
+    </div>
+   </div>
+  </div>`;
+}
+
+function dailyCheck(){
+  if(ME.lastDaily===todayISO()) return;
+  ME.lastDaily = todayISO();
+  addPoints(ME, '웹 출석', 5);
+  renderPoints();
+}
+function verseSubmit(){
+  if(ME.lastVerse===todayISO()) return;
+  const verse = verses[new Date().getDate() % verses.length];
+  const norm = s => s.replace(/\s+/g,'');
+  const v = document.getElementById('vInput').value;
+  if(!v.trim()){ alert('구절을 입력해 주세요!'); return; }
+  if(norm(v) !== norm(verse.text)){
+    alert('구절과 조금 달라요! 다시 한 번 천천히 살펴보세요 🙂');
+    return;
+  }
+  ME.lastVerse = todayISO();
+  addPoints(ME, '말씀 따라쓰기', 15);
+  renderPoints();
+}
+function redeem(i){
+  const it = shopItems[i];
+  if((ME.points||0) < it.cost){ alert(`포인트가 부족해요! (${it.cost-ME.points}P 더 모아야 해요)`); return; }
+  if(!confirm(`${it.cost}P로 "${it.name}"을(를) 교환할까요?`)) return;
+  ME.points -= it.cost;
+  pointLog.unshift({ name:ME.name, date:todayMD(), label:`상점 교환 — ${it.name}`, amt:-it.cost });
+  redemptions.unshift({ name:ME.name, item:it.name, date:todayMD(), status:'pending' });
+  addNoti(`🎁 ${ME.name} 상점 교환 신청: ${it.name}`, true);
+  showToast('교환 신청 완료! 선생님 확인 후 지급돼요');
+  renderPoints();
+}
+function redeemDone(i){
+  redemptions[i].status = 'done';
+  showAdminTab('dash');
+}
+
+/* ================= 알림 ================= */
+let notifications = [
+  { date:'06/12', text:'📢 이번 주 토요일(6/20) 체육대회! 운동복을 준비하세요', staff:false, read:false },
+  { date:'06/12', text:'🎂 박서연 생일이 다가와요 (6/15) — 축하 준비!', staff:true, read:false },
+];
+function visibleNotis(){ return notifications.filter(n=>!n.staff || isStaff()); }
+function addNoti(text, staffOnly){
+  notifications.unshift({ date:todayMD(), text, staff:!!staffOnly, read:false });
+  renderBell();
+}
+function renderBell(){
+  document.getElementById('bellDot').classList.toggle('hidden', !visibleNotis().some(n=>!n.read));
+}
+function toggleNoti(){
+  const p = document.getElementById('notiPanel');
+  const nowHidden = p.classList.toggle('hidden');
+  if(!nowHidden){
+    p.innerHTML = visibleNotis().slice(0,15).map(n=>
+      `<div class="noti-item"><div>${n.text}</div><div class="nd">${n.date}</div></div>`).join('')
+      || '<div class="noti-item">알림이 없어요</div>';
+    visibleNotis().forEach(n=>n.read=true);
+    renderBell();
+  }
+}
+
+/* ================= 수련회 신청 ================= */
+let retreatApps = [
+  { name:'박서연', cls:'고1 사랑반', fee:true,  note:'', date:'06/10' },
+  { name:'정민재', cls:'중3 기쁨반', fee:false, note:'회비는 주일에 제출할게요', date:'06/11' },
+];
+function openRetreatModal(){
+  const dup = retreatApps.find(a=>a.name===ME.name);
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <div><div style="font-weight:800;font-size:1.15rem">🏕️ 여름 수련회 신청</div>
+        <div style="color:var(--sub);font-size:.85rem">7/24(금)~26(주일) · 가평 수양관 · 회비 50,000원</div></div>
+        <button class="modal-x" onclick="closeStudentModal()">✕</button>
+      </div>
+      ${dup ? `<div class="cp-empty" style="padding:20px;text-align:center">이미 신청했어요! (${dup.date}) 🙌<br>변경은 담당 선생님께 말씀해 주세요.</div>` : `
+      <div class="modal-label">신청자</div>
+      <input type="text" value="${ME.name} (${ME.cls||''})" disabled style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--bg)">
+      <div class="modal-label">회비</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.92rem"><input type="checkbox" id="rFee"> 회비 50,000원을 납부했어요 (또는 납부 예정)</label>
+      <div class="modal-label">참고사항 (선택)</div>
+      <input type="text" id="rNote" placeholder="알레르기, 약 복용 등 선생님이 알아야 할 내용" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
+      <button class="approve-btn" style="margin-top:16px;width:100%;padding:12px" onclick="retreatApply()">신청하기</button>`}
+    </div>
+  </div>`;
+}
+function retreatApply(){
+  retreatApps.push({ name:ME.name, cls:ME.cls||'', fee:document.getElementById('rFee').checked, note:document.getElementById('rNote').value.trim(), date:todayMD() });
+  addNoti(`🏕️ ${ME.name} 수련회 신청!`, true);
+  closeStudentModal();
+  showToast('수련회 신청 완료! 🏕️');
+}
+
+/* ================= 새가족 가입 신청 ================= */
+function openSignupModal(){
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <div><div style="font-weight:800;font-size:1.15rem">✋ 새가족 가입 신청</div>
+        <div style="color:var(--sub);font-size:.85rem">선생님 승인 후 커뮤니티를 이용할 수 있어요</div></div>
+        <button class="modal-x" onclick="closeStudentModal()">✕</button>
+      </div>
+      <div style="display:grid;gap:10px">
+        <input type="text" id="suName" placeholder="이름 *" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none">
+        <input type="text" id="suSchool" placeholder="학교·학년 (예: 안천중 2학년)" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none">
+        <input type="text" id="suPhone" placeholder="연락처" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none">
+      </div>
+      <button class="approve-btn" style="margin-top:14px;width:100%;padding:12px" onclick="signupApply()">가입 신청하기</button>
+    </div>
+  </div>`;
+}
+function signupApply(){
+  const name = document.getElementById('suName').value.trim();
+  if(!name){ alert('이름을 입력해 주세요!'); return; }
+  if(members.find(m=>m.name===name)){ alert('이미 등록된 이름이에요. 선생님께 문의해 주세요!'); return; }
+  members.push({
+    name, role:'student', teams:[], points:0,
+    cls:'반 배정 예정', school:document.getElementById('suSchool').value.trim()||'-',
+    birthday:'-', phone:document.getElementById('suPhone').value.trim()||'-',
+    joined:todayISO(), status:'wait', att:[false,false,false,false], lastAttended:'-',
+    care:'new', careNote:'새가족 — 첫 정착 케어 필요', memos:[],
+  });
+  addNoti(`✋ ${name} 새가족 가입 신청 — 승인이 필요해요`, true);
+  closeStudentModal();
+  alert(`${name}님, 가입 신청 완료! 선생님 승인 후 이용할 수 있어요 😊`);
+  renderSidebar();
+}
+
+/* ================= 사진 업로드 ================= */
+let pendingImg = null, bannerPendingImg = null;
+function resizeImage(file, maxW, cb){
+  const rd = new FileReader();
+  rd.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      const w = Math.min(maxW, img.width);
+      c.width = w; c.height = Math.round(img.height * w / img.width);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', .72));
+    };
+    img.src = e.target.result;
+  };
+  rd.readAsDataURL(file);
+}
+function handleImg(inp){
+  if(!inp.files[0]) return;
+  resizeImage(inp.files[0], 720, url=>{
+    pendingImg = url;
+    const prev = document.getElementById('wImgPrev');
+    prev.src = url; prev.classList.remove('hidden');
+  });
+}
+function handleBannerImg(inp){
+  if(!inp.files[0]) return;
+  resizeImage(inp.files[0], 1080, url=>{
+    bannerPendingImg = url;
+    const st = document.getElementById('bImgStatus');
+    if(st) st.textContent = '업로드 완료 ✓';
+  });
+}
+
+/* ================= 저장 — Supabase 공유 백엔드 ================= */
+/* 모든 구성원이 같은 데이터를 봅니다. (오프라인 시 localStorage 백업 사용) */
+const SUPA_URL = 'https://prqgrmudhnvhzfgxvjoj.supabase.co';
+const SUPA_KEY = 'sb_publishable_1g1mYUhqVCTgWZuAItdmIw_K2JvRI0b';
+const supaHeaders = { apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json' };
+const SAVE_KEY = 'ancheon_proto_v1';
+
+function snapshot(){
+  return { posts, prayers, members, heroSlides, pointLog, redemptions, retreatApps, notifications, postSeq };
+}
+function applyState(d){
+  posts=d.posts; prayers=d.prayers; members=d.members; heroSlides=d.heroSlides;
+  pointLog=d.pointLog; redemptions=d.redemptions; retreatApps=d.retreatApps;
+  notifications=d.notifications; postSeq=d.postSeq;
+}
+function saveState(){
+  const data = snapshot();
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }catch(e){}
+  fetch(`${SUPA_URL}/rest/v1/app_state?id=eq.1`, {
+    method:'PATCH', headers:supaHeaders,
+    body: JSON.stringify({ data, updated_at:new Date().toISOString() }),
+  }).catch(()=>{});
+}
+async function loadState(){
+  try{
+    const r = await fetch(`${SUPA_URL}/rest/v1/app_state?id=eq.1&select=data`, { headers:supaHeaders });
+    const rows = await r.json();
+    if(rows && rows[0] && rows[0].data && rows[0].data.posts){ applyState(rows[0].data); return; }
+  }catch(e){ /* 오프라인 → localStorage 백업 */ }
+  try{
+    const s = localStorage.getItem(SAVE_KEY);
+    if(s){ const d = JSON.parse(s); if(d.posts) applyState(d); }
+  }catch(e){}
+}
+function resetData(){
+  if(!confirm('모든 데이터를 초기 상태로 되돌릴까요? (모든 사용자에게 적용됩니다)')) return;
+  localStorage.removeItem(SAVE_KEY);
+  fetch(`${SUPA_URL}/rest/v1/app_state?id=eq.1`, {
+    method:'PATCH', headers:supaHeaders, body:JSON.stringify({ data:{} }),
+  }).finally(()=>location.reload());
+}
+let saveTimer;
+function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveState, 300); }
+document.addEventListener('click', queueSave, true);
+document.addEventListener('keydown', queueSave, true);
+
+/* ================= 검색 ================= */
+function doSearch(){
+  const q = document.getElementById('searchInput').value.trim();
+  if(!q) return;
+  const res = posts.filter(p=>canSeePost(p) && (p.title.includes(q)||p.body.includes(q)));
+  showView('search');
+  document.getElementById('searchInfo').textContent = `"${q}" — ${res.length}건`;
+  document.getElementById('searchList').innerHTML = res.length ? res.map(p=>
+    `<div class="post-row" onclick="openPost(${p.id})">
+      <div class="title-wrap"><span class="title">${p.title}</span>
+      ${p.comments.length?`<span class="cmt">[${p.comments.length}]</span>`:''}</div>
+      <span class="author">${p.author}${badge(p.role)}</span>
+      <span class="time">${p.time}</span>
+    </div>`).join('') : '<div class="empty">검색 결과가 없어요</div>';
+}
+
+/* ================= 초기화 ================= */
+switchPersona('hayeun'); // 우선 기본 데이터로 표시
+loadState().then(()=>{   // Supabase에서 공유 데이터 로드 후 갱신
+  switchPersona(document.getElementById('personaSelect').value);
+  renderBell();
+});
+</script>
+</body>
+</html>

@@ -1951,6 +1951,16 @@ function showAuth(mode){
   const logo = `<div class="auth-logo">
     <div style="width:38px;height:38px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">안</div>
     <div style="font-weight:800;font-size:1.3rem">안천 <span style="color:var(--primary)">청소년부</span></div></div>`;
+  if(mode==='name'){ // 기존 계정으로 로그인했지만 멤버 정보가 없는 경우
+    card.innerHTML = logo + `
+      <div style="text-align:center;font-weight:800;font-size:1.05rem;margin-bottom:6px">거의 다 됐어요!</div>
+      <div style="color:var(--sub);font-size:.88rem;text-align:center;margin-bottom:14px">커뮤니티에서 사용할 이름(실명)을 알려주세요</div>
+      <input id="aName" placeholder="이름 (실명)" maxlength="10" onkeydown="if(event.key==='Enter')doEnsure()">
+      <div class="auth-err" id="aErr"></div>
+      <button class="auth-btn" id="aBtn" onclick="doEnsure()">시작하기</button>
+      <button style="margin-top:12px;color:var(--sub);font-size:.85rem;width:100%" onclick="logout()">로그아웃</button>`;
+    return;
+  }
   if(mode==='wait'){
     card.innerHTML = logo + `<div style="text-align:center;padding:8px 0">
       <div style="font-size:2.4rem">⏳</div>
@@ -1988,8 +1998,22 @@ async function doSignup(){
   const btn=document.getElementById('aBtn'); btn.disabled=true;
   const { error } = await sb.auth.signUp({ email:val('aEmail'), password:val('aPw'), options:{ data:{ name } } });
   btn.disabled=false;
-  if(error){ document.getElementById('aErr').textContent='가입 실패: '+error.message; return; }
+  if(error){
+    document.getElementById('aErr').textContent = /already registered/i.test(error.message)
+      ? '이미 이 이메일로 계정이 있어요 — 로그인 탭에서 기존 비밀번호로 로그인해 주세요!'
+      : '가입 실패: '+error.message;
+    return;
+  }
   setTimeout(boot, 600); // 멤버 생성 트리거 대기
+}
+async function doEnsure(){
+  const name = val('aName');
+  if(!name){ document.getElementById('aErr').textContent='이름을 입력해 주세요'; return; }
+  const btn = document.getElementById('aBtn'); btn.disabled = true;
+  const { error } = await sb.rpc('ac_ensure_member', { nm:name });
+  btn.disabled = false;
+  if(error){ document.getElementById('aErr').textContent='실패: '+error.message; return; }
+  boot();
 }
 async function logout(){ await sb.auth.signOut(); location.reload(); }
 
@@ -1998,7 +2022,8 @@ async function boot(){
   if(!session){ showAuth('login'); return; }
   MYID = session.user.id;
   try{ await loadAll(); }catch(e){ alert('데이터 로딩 실패: '+e.message); return; }
-  if(!ME || ME.status!=='ok'){ showAuth('wait'); return; }
+  if(!ME){ showAuth('name'); return; }           // 기존 계정 → 이름 입력 후 멤버 생성
+  if(ME.status!=='ok'){ showAuth('wait'); return; }
   startApp();
 }
 

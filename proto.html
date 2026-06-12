@@ -4,24 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>안천 청소년부 커뮤니티</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-/* ===== 로그인/가입 ===== */
-.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
-.auth-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 26px;width:100%;max-width:380px}
-.auth-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:20px}
-.auth-tabs{display:flex;gap:6px;margin-bottom:16px}
-.auth-tabs button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);font-weight:700;color:var(--sub);background:var(--card)}
-.auth-tabs button.active{background:var(--primary);border-color:var(--primary);color:#fff}
-.auth-card input{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;outline:none;font-size:.95rem}
-.auth-card input:focus{border-color:var(--primary)}
-.auth-btn{width:100%;background:var(--primary);color:#fff;font-weight:800;padding:13px;border-radius:10px;font-size:1rem}
-.auth-btn:disabled{opacity:.6}
-.auth-err{color:var(--pastor);font-size:.85rem;margin-bottom:8px;min-height:1.1em}
-.authing header,.authing .layout,.authing .mobile-nav{display:none}
-.logout-btn{font-size:.72rem;color:var(--sub);padding:2px 5px;border-radius:6px;flex-shrink:0}
-.logout-btn:hover{background:var(--bg);color:var(--pastor)}
-</style>
 <style>
 :root{
   --primary:#E94F37;
@@ -589,7 +571,7 @@ header{
   <div class="header-inner">
     <div class="logo" onclick="showView('home')">
       <div class="mark">안</div>
-      <div class="name">안천 <span>청소년부</span></div>
+      <div class="name">안천 <span>청소년부</span> <span style="font-size:.65rem;background:#FFF4E0;color:#E67E22;padding:2px 7px;border-radius:8px;vertical-align:middle">체험판</span></div>
     </div>
     <nav class="gnb">
       <button data-nav="home" class="active" onclick="showView('home')">홈</button>
@@ -605,15 +587,18 @@ header{
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
       <span class="bell-dot hidden" id="bellDot"></span>
     </button>
-    <div class="user-chip" id="userChip"></div>
+    <div class="user-chip" title="프로토타입: 역할을 바꿔가며 화면을 체험해 보세요">
+      <div class="avatar" id="meAvatar">하은</div>
+      <select class="persona-select" id="personaSelect" onchange="switchPersona(this.value)">
+        <option value="hayeun">김하은 (학생·임원단)</option>
+        <option value="seoyeon">박서연 (학생·찬양팀)</option>
+        <option value="teacher">김은혜 (교사)</option>
+        <option value="pastor">이요한 (교역자)</option>
+      </select>
+    </div>
   </div>
   <div class="noti-panel hidden" id="notiPanel"></div>
 </header>
-
-<!-- 로그인 / 가입 / 승인 대기 -->
-<div id="authView" class="auth-wrap hidden">
-  <div class="auth-card" id="authCard"></div>
-</div>
 
 <div class="layout">
 
@@ -633,6 +618,7 @@ header{
         <button onclick="showView('calendar')">📅 일정</button>
         <button onclick="showView('attendance')">✅ 출석체크</button>
         <button onclick="showView('points')">🎁 포인트</button>
+        <button onclick="openSignupModal()">✋ 새가족 가입 신청</button>
       </div>
     </div>
   </aside>
@@ -798,26 +784,22 @@ header{
 
 <script>
 /* ================= 데이터 ================= */
-let ME = null, MYID = null;
+const personaNames = {
+  hayeun:'김하은', seoyeon:'박서연', teacher:'김은혜 선생님', pastor:'이요한 전도사',
+};
+let ME; // 초기화 시 switchPersona로 설정
 
-function isStaff(){ return !!ME && ME.role !== 'student'; }
+function isStaff(){ return ME.role !== 'student'; }
 /* 웹페이지 관리자: 교사·교역자 전체 권한, 학생 웹지기는 게시글·배너 관리만 */
-function canAdmin(){ return isStaff() || !!(ME && ME.siteAdmin); }
+function canAdmin(){ return isStaff() || !!ME.siteAdmin; }
 
-function renderUserChip(){
-  document.getElementById('userChip').innerHTML =
-    `<div class="avatar">${ME.name.slice(1,3)}</div>
-     <span style="font-weight:600;font-size:.9rem">${ME.name}</span>
-     <button class="logout-btn" onclick="logout()">로그아웃</button>`;
-}
-function startApp(){
-  document.body.classList.remove('authing');
-  document.getElementById('authView').classList.add('hidden');
-  renderUserChip();
+function switchPersona(key){
+  ME = members.find(m=>m.name===personaNames[key]);
+  document.getElementById('personaSelect').value = key;
+  document.getElementById('meAvatar').textContent = ME.name.slice(1,3);
   document.getElementById('adminNavBtn').classList.toggle('hidden', !canAdmin());
   initWriteForm();
   renderSidebar();
-  renderBell();
   showView('home');
 }
 
@@ -839,7 +821,21 @@ function canSeePost(p){
 }
 function teamNotices(){ return posts.filter(isTeamNotice); }
 
-let members = []; // Supabase ac_members에서 로드
+let members = [
+  { name:'김하은', role:'student', teams:['leaders'], siteAdmin:true, points:120, cls:'고1 사랑반', school:'안천고 1학년', birthday:'2010-11-02', phone:'010-2311-0412', joined:'2025-03-08', status:'ok', att:[true,false,false,false], lastAttended:'06/07', care:null, careNote:'',
+    memos:[{date:'05/24', text:'수련회 참석 의사 확인. 친구 지수를 데려오고 싶다고 함'}] },
+  { name:'박서연', role:'student', teams:['praise'], points:95, cls:'고1 사랑반', school:'안천고 1학년', birthday:'2010-06-15', phone:'010-8765-2210', joined:'2025-03-08', status:'ok', att:[true,false,false,false], lastAttended:'06/07', care:null, careNote:'', memos:[] },
+  { name:'이준서', role:'student', teams:[], points:30, cls:'고2 소망반', school:'안천고 2학년', birthday:'2009-08-30', phone:'010-3399-1287', joined:'2024-09-15', status:'ok', att:[false,false,false,false], lastAttended:'05/17', care:null, careNote:'',
+    memos:[{date:'06/08', text:'기말고사 준비로 당분간 못 나온다고 연락 옴. 시험 끝나는 6/19 이후 심방 예정'}] },
+  { name:'정민재', role:'student', teams:['praise'], points:80, cls:'중3 기쁨반', school:'안천중 3학년', birthday:'2011-02-14', phone:'010-5512-9034', joined:'2025-01-12', status:'ok', att:[true,false,false,false], lastAttended:'06/07', care:null, careNote:'', memos:[] },
+  { name:'최유진', role:'student', teams:['leaders'], points:60, cls:'중3 기쁨반', school:'안천중 3학년', birthday:'2011-09-21', phone:'010-7401-3358', joined:'2025-01-12', status:'ok', att:[false,false,false,false], lastAttended:'05/31', care:'sick', careNote:'독감 회복 중, 이번 주 전화 심방 예정',
+    memos:[{date:'06/09', text:'어머님과 통화. 거의 회복, 다음 주부터 출석 예정'}] },
+  { name:'김도윤', role:'student', teams:['praise'], points:45, cls:'중2 믿음반', school:'안천중 2학년', birthday:'2012-06-28', phone:'010-6620-4471', joined:'2025-05-02', status:'ok', att:[true,false,false,false], lastAttended:'06/07', care:null, careNote:'', memos:[] },
+  { name:'신예은', role:'student', teams:[], points:0, cls:'중2 믿음반', school:'안천중 2학년', birthday:'2012-03-19', phone:'010-9183-5526', joined:'2026-06-10', status:'wait', att:[false,false,false,false], lastAttended:'-', care:'new', careNote:'첫 정착 케어 필요', memos:[] },
+  { name:'김은혜 선생님', role:'teacher', teams:['leaders'], cls:'고1 사랑반 담임 · 임원단 담당', joined:'2023-02-01', status:'ok', att:[true,false,false,false] },
+  { name:'박성훈 선생님', role:'teacher', teams:['praise'],  cls:'고2 소망반 담임 · 찬양팀 담당', joined:'2023-02-01', status:'ok', att:[true,false,false,false] },
+  { name:'이요한 전도사', role:'pastor',  teams:[],          cls:'청소년부 담당',   joined:'2022-12-01', status:'ok', att:[true,false,false,false] },
+];
 
 const careTypes = { sick:'질병', new:'새가족', watch:'집중관찰' };
 
@@ -875,10 +871,8 @@ function badge(role){
   return '';
 }
 
-let posts = [];   // Supabase ac_posts에서 로드
-let prayers = []; // Supabase ac_prayers에서 로드
-/* ===== 이하 프로토타입 시드 데이터 (보존용 주석) SEED_START
-let _seed_posts = [
+let postSeq = 100;
+let posts = [
   { id:1, board:'notice', notice:true, title:'🏕️ 여름 수련회 신청 안내 (6/21 마감!)', author:'이요한 전도사', role:'pastor', time:'06/08', views:152, likes:24, liked:false,
     body:'우리 청소년부 여름 수련회가 7월 24일(금)~26일(주일), 가평 수양관에서 열립니다!\n\n주제: "주님과 함께 걷는 길"\n회비: 50,000원 (형제 참석 시 할인)\n신청: 각 반 선생님께 6월 21일(주일)까지\n\n작년보다 더 풍성한 프로그램이 준비되어 있어요. 한 명도 빠짐없이 함께해요! 🙌',
     comments:[
@@ -939,7 +933,6 @@ let prayers = [
   { id:3, author:'김은혜 선생님', role:'teacher', time:'06/09', body:'우리 반 아이들이 수련회를 통해 하나님을 인격적으로 만나게 해주세요.', count:23, prayed:false },
   { id:4, author:'최유진', role:'student', time:'06/08', body:'아직 교회에 나오지 못하는 친구 지수를 위해 기도해 주세요. 수련회에 같이 가고 싶어요.', count:31, prayed:false },
 ];
-SEED_END ===== */
 
 const events = [
   { date:'2026-06-14', title:'주일예배', sub:'오전 11시 · 교육관 2층' },
@@ -991,7 +984,14 @@ function renderSidebar(){
 /* 실제 사진/포스터를 쓰려면 img에 파일 경로나 URL을 넣으세요.
    예: { img:'images/retreat_poster.jpg', tag:'POSTER', title:'...', sub:'...', postId:1 }
    img가 없으면 grad(그라데이션) + emoji로 포스터풍 배너를 그립니다. */
-let heroSlides = []; // Supabase ac_banners에서 로드
+let heroSlides = [
+  { grad:'linear-gradient(118deg,#E94F37 10%,#F2784B 55%,#F7B267)', emoji:'🏕️', tag:'POSTER',
+    title:'2026 여름 수련회 「주님과 함께 걷는 길」', sub:'7/24(금)~26(주일) · 가평 수양관 — 신청 마감 6/21', postId:1 },
+  { grad:'linear-gradient(118deg,#2D6CDF,#5B96EC 60%,#8FBAF3)', emoji:'🏐', tag:'EVENT',
+    title:'청소년부 체육대회', sub:'6/20(토) 오후 2시 · 안천중 운동장 — 피구·발야구·이어달리기', postId:2 },
+  { grad:'linear-gradient(118deg,#27AE60,#52C27D 60%,#8FD9A8)', emoji:'📸', tag:'PHOTO',
+    title:'우리 청소년부, 한 컷!', sub:'단체사진과 행사 사진은 사진첩에서 — 함께한 순간들', boardId:'photo' },
+];
 let heroIdx = 0;
 function renderHero(){
   const h = document.getElementById('hero');
@@ -1088,7 +1088,7 @@ function renderDday(){
 }
 
 function renderAttMini(){
-  const my = ME.att;
+  const my = members[0].att;
   document.getElementById('attMini').innerHTML = attendance.map((a,i)=>
     `<div class="att-dot ${my[i]?'on':''}"><span>${a.week.split(' ')[1]}</span><span>${my[i]?'✓':'·'}</span></div>`).join('');
 }
@@ -1138,7 +1138,6 @@ function openPost(id){
   }
   currentPost = p;
   p.views++;
-  sb.rpc('ac_inc_views', { pid:p.id }).then(()=>{});
   showView('post');
   document.getElementById('postBack').onclick = ()=>openBoard(p.board);
   renderPostDetail();
@@ -1180,29 +1179,22 @@ function toggleLike(){
   p.liked = !p.liked;
   p.likes += p.liked ? 1 : -1;
   renderPostDetail();
-  if(p.liked) sb.from('ac_post_likes').insert({ post_id:p.id, member_id:MYID }).then(()=>{});
-  else sb.from('ac_post_likes').delete().eq('post_id',p.id).eq('member_id',MYID).then(()=>{});
 }
 
-async function addComment(){
+function addComment(){
   const inp = document.getElementById('cmtInput');
   const v = inp.value.trim();
   if(!v) return;
-  const { data, error } = await sb.from('ac_comments')
-    .insert({ post_id:currentPost.id, author:MYID, body:v }).select().single();
-  if(err(error,'댓글 등록 실패')) return;
-  currentPost.comments.push({ _id:data.id, author:ME.name, role:ME.role, time:'방금', body:v });
-  earn('comment');
+  currentPost.comments.push({ author:ME.name, role:ME.role, time:'방금', body:v });
+  addPoints(ME, '댓글 작성', 3);
   renderPostDetail();
   renderSidebar();
 }
 
 /* 댓글 삭제: 교사·교역자·웹 관리자 */
-function canModerate(){ return isStaff() || !!(ME && ME.siteAdmin); }
-async function deleteComment(i){
+function canModerate(){ return isStaff() || !!ME.siteAdmin; }
+function deleteComment(i){
   if(!confirm('이 댓글을 삭제할까요?')) return;
-  const c = currentPost.comments[i];
-  if(c._id){ const { error } = await sb.from('ac_comments').delete().eq('id', c._id); if(err(error,'삭제 실패')) return; }
   currentPost.comments.splice(i,1);
   renderPostDetail();
 }
@@ -1224,26 +1216,22 @@ function updatePinRow(){
   document.getElementById('pinRow').classList.toggle('hidden', !can);
   if(!can) document.getElementById('wPin').checked = false;
 }
-async function submitPost(){
+function submitPost(){
   const board = document.getElementById('wBoard').value;
   const title = document.getElementById('wTitle').value.trim();
   const body  = document.getElementById('wBody').value.trim();
   if(!title){ alert('제목을 입력해 주세요!'); return; }
   if(!body){ alert('내용을 입력해 주세요!'); return; }
   const pin = board==='notice' || document.getElementById('wPin').checked;
-  let img_url = null;
-  if(pendingImg){ img_url = await uploadPhoto(pendingImg); pendingImg = null; }
-  const { data, error } = await sb.from('ac_posts')
-    .insert({ board, title, body, notice:pin, img_url, author:MYID }).select().single();
-  if(err(error,'글 등록 실패')) return;
-  posts.push({ id:data.id, board, title, body, img:img_url, notice:pin, views:0,
-    author:ME.name, role:ME.role, _aid:MYID, time:'방금', likes:0, liked:false, comments:[] });
+  const newPost = { id:++postSeq, board, title, body, author:ME.name, role:ME.role, time:'방금', views:1, likes:0, liked:false, comments:[], notice:pin };
+  if(pendingImg){ newPost.img = pendingImg; pendingImg = null; }
+  posts.push(newPost);
   document.getElementById('wTitle').value='';
   document.getElementById('wBody').value='';
   document.getElementById('wPin').checked=false;
   document.getElementById('wImg').value='';
   document.getElementById('wImgPrev').classList.add('hidden');
-  earn('post');
+  addPoints(ME, '게시글 작성', 10);
   if(pin) addNoti(`📢 새 공지: ${title}`, false);
   renderSidebar();
   openBoard(board);
@@ -1263,18 +1251,14 @@ function pray(id){
   p.prayed = !p.prayed;
   p.count += p.prayed ? 1 : -1;
   renderPrayers();
-  if(p.prayed) sb.from('ac_prayer_prays').insert({ prayer_id:id, member_id:MYID }).then(()=>{});
-  else sb.from('ac_prayer_prays').delete().eq('prayer_id',id).eq('member_id',MYID).then(()=>{});
 }
-async function addPrayer(){
+function addPrayer(){
   const inp = document.getElementById('prayerInput');
   const v = inp.value.trim();
   if(!v) return;
-  const { data, error } = await sb.from('ac_prayers').insert({ author:MYID, body:v }).select().single();
-  if(err(error,'등록 실패')) return;
-  prayers.push({ id:data.id, author:ME.name, role:ME.role, time:'방금', body:v, count:0, prayed:false });
+  prayers.push({ id:prayers.length+1, author:ME.name, role:ME.role, time:'방금', body:v, count:0, prayed:false });
   inp.value='';
-  earn('prayer');
+  addPoints(ME, '기도제목 나눔', 5);
   renderPrayers();
 }
 
@@ -1312,7 +1296,7 @@ function renderCalendar(){
 
 /* ================= 출석체크 ================= */
 function renderAttendance(){
-  const my = ME.att;
+  const my = members[0].att;
   const streakN = 4 + (my[0] ? 1 + (my[1]?1:0) : 0);
   document.getElementById('attStreak').textContent =
     my[0] ? `🔥 ${streakN}주 연속 출석 중!` : `이번 달 출석 ${my.filter(Boolean).length}회`;
@@ -1345,7 +1329,7 @@ function showAdminTab(tab){
 function adminDash(){
   const totalCmts = posts.reduce((s,p)=>s+p.comments.length,0);
   const students = members.filter(m=>m.role==='student' && m.status==='ok');
-  const rate = students.length ? Math.round(students.filter(m=>m.att[0]).length / students.length * 100) : 0;
+  const rate = Math.round(students.filter(m=>m.att[0]).length / students.length * 100);
   const wait = members.filter(m=>m.status==='wait');
   const recent = posts.slice().reverse().slice(0,5);
   return `
@@ -1394,7 +1378,9 @@ function adminDash(){
           :'<span class="status-pill ok" style="margin-left:auto">지급됨</span>'}
       </div>`).join('') : '<div class="empty" style="padding:16px">교환 신청이 없어요</div>'}
   </div>
-  `:''}`;
+  <div style="text-align:right;margin-top:14px">
+    <button class="del-btn" onclick="resetData()">🔄 프로토타입 데이터 초기화</button>
+  </div>`:''}`;
 }
 
 function adminMembers(){
@@ -1420,23 +1406,18 @@ function adminMembers(){
   </table></div>`;
 }
 
-async function toggleSiteAdmin(i){
-  const m = members[i];
-  const { error } = await sb.from('ac_members').update({ site_admin:!m.siteAdmin }).eq('id', m.id);
-  if(err(error,'변경 실패')) return;
-  m.siteAdmin = !m.siteAdmin;
+function toggleSiteAdmin(i){
+  members[i].siteAdmin = !members[i].siteAdmin;
   showAdminTab('members');
-  if(m===ME) document.getElementById('adminNavBtn').classList.toggle('hidden', !canAdmin());
+  if(members[i]===ME) document.getElementById('adminNavBtn').classList.toggle('hidden', !canAdmin());
 }
 
-async function toggleTeam(i, team){
+function toggleTeam(i, team){
   const m = members[i];
-  const next = (m.teams||[]).includes(team) ? m.teams.filter(t=>t!==team) : [...(m.teams||[]), team];
-  const { error } = await sb.from('ac_members').update({ teams:next }).eq('id', m.id);
-  if(err(error,'변경 실패')) return;
-  m.teams = next;
+  m.teams = m.teams || [];
+  m.teams = m.teams.includes(team) ? m.teams.filter(t=>t!==team) : [...m.teams, team];
   showAdminTab('members');
-  renderSidebar();
+  renderSidebar(); // 본인 소속이 바뀌었을 수 있으니 사이드바 갱신
 }
 
 function adminPosts(){
@@ -1551,55 +1532,40 @@ function openStudentModal(mi){
   </div>`;
 }
 function closeStudentModal(){ document.getElementById('modalRoot').innerHTML=''; }
-async function setCare(mi, val){
-  const { error } = await sb.from('ac_member_private').update({ care: val||null }).eq('member_id', members[mi].id);
-  if(err(error,'변경 실패')) return;
+function setCare(mi, val){
   members[mi].care = val || null;
   showAdminTab('students'); openStudentModal(mi);
 }
-async function setCareNote(mi, val){
-  const { error } = await sb.from('ac_member_private').update({ care_note: val }).eq('member_id', members[mi].id);
-  if(err(error,'변경 실패')) return;
+function setCareNote(mi, val){
   members[mi].careNote = val;
   showAdminTab('students');
 }
-async function addStudentMemo(mi){
+function addStudentMemo(mi){
   const inp = document.getElementById('memoInput');
   const v = inp.value.trim();
   if(!v) return;
-  const { data, error } = await sb.from('ac_care_memos')
-    .insert({ member_id:members[mi].id, author:MYID, text:v }).select().single();
-  if(err(error,'기록 실패')) return;
-  members[mi].memos.unshift({ _id:data.id, date:todayMD(), text:v });
+  const d = new Date();
+  members[mi].memos.unshift({ date:`${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`, text:v });
   openStudentModal(mi);
 }
 
-async function approveMember(name){
+function approveMember(name){
   const m = members.find(x=>x.name===name);
-  if(!m) return;
-  const { error } = await sb.from('ac_members').update({ status:'ok' }).eq('id', m.id);
-  if(err(error,'승인 실패')) return;
-  m.status = 'ok';
+  if(m) m.status = 'ok';
   showAdminTab(currentAdminTab);
 }
-async function changeRole(i, role){
-  const { error } = await sb.from('ac_members').update({ role }).eq('id', members[i].id);
-  if(err(error,'변경 실패')) return;
+function changeRole(i, role){
   members[i].role = role;
   showAdminTab('members');
 }
-async function toggleNotice(id){
+function toggleNotice(id){
   const p = posts.find(x=>x.id===id);
-  const { error } = await sb.from('ac_posts').update({ notice:!p.notice }).eq('id', id);
-  if(err(error,'변경 실패')) return;
   p.notice = !p.notice;
   showAdminTab('posts');
 }
-async function deletePostAdmin(id){
+function deletePostAdmin(id){
   const p = posts.find(x=>x.id===id);
   if(!confirm(`"${p.title}" 글을 삭제할까요?`)) return;
-  const { error } = await sb.from('ac_posts').delete().eq('id', id);
-  if(err(error,'삭제 실패')) return;
   posts = posts.filter(x=>x.id!==id);
   renderSidebar();
   showAdminTab('posts');
@@ -1654,54 +1620,46 @@ function adminBanner(){
     <button class="approve-btn" style="margin-top:12px;padding:10px 22px" onclick="bannerAdd()">배너 추가</button>
   </div>`;
 }
-async function bannerMove(i, dir){
+function bannerMove(i, dir){
   const j = i + dir;
   if(j<0 || j>=heroSlides.length) return;
-  const a = heroSlides[i], b = heroSlides[j];
-  await Promise.all([
-    sb.from('ac_banners').update({ sort:j }).eq('id', a._id),
-    sb.from('ac_banners').update({ sort:i }).eq('id', b._id),
-  ]);
-  [heroSlides[i], heroSlides[j]] = [b, a];
+  [heroSlides[i], heroSlides[j]] = [heroSlides[j], heroSlides[i]];
   if(heroIdx===i) heroIdx=j; else if(heroIdx===j) heroIdx=i;
   showAdminTab('banner');
 }
-async function bannerDelete(i){
+function bannerDelete(i){
   if(!confirm(`"${heroSlides[i].title}" 배너를 삭제할까요?`)) return;
-  const { error } = await sb.from('ac_banners').delete().eq('id', heroSlides[i]._id);
-  if(err(error,'삭제 실패')) return;
   heroSlides.splice(i,1);
   heroIdx = 0;
   showAdminTab('banner');
 }
-async function bannerAdd(){
+function bannerAdd(){
   const v = id => document.getElementById(id).value.trim();
   if(!v('bTitle')){ alert('제목을 입력해 주세요!'); return; }
-  let img_url = v('bImg') || null;
-  if(!img_url && bannerPendingImg){ img_url = await uploadPhoto(bannerPendingImg); bannerPendingImg = null; }
-  const row = {
-    tag: v('bTag') || 'NOTICE', emoji: v('bEmoji') || '📌',
-    title: v('bTitle'), sub: v('bSub'),
+  const slide = {
+    tag: v('bTag') || 'NOTICE',
+    emoji: v('bEmoji') || '📌',
+    title: v('bTitle'),
+    sub: v('bSub'),
     grad: bannerGrads[heroSlides.length % bannerGrads.length],
-    img_url, post_id: v('bPost') ? Number(v('bPost')) : null,
-    board_id: (!v('bPost') && v('bBoard')) ? v('bBoard') : null,
-    sort: heroSlides.length,
   };
-  const { data, error } = await sb.from('ac_banners').insert(row).select().single();
-  if(err(error,'배너 추가 실패')) return;
-  heroSlides.push({ _id:data.id, tag:row.tag, emoji:row.emoji, title:row.title, sub:row.sub,
-    grad:row.grad, img:img_url, postId:row.post_id, boardId:row.board_id, sort:row.sort });
+  if(v('bImg')) slide.img = v('bImg');
+  else if(bannerPendingImg){ slide.img = bannerPendingImg; bannerPendingImg = null; }
+  if(v('bPost')) slide.postId = Number(v('bPost'));
+  else if(v('bBoard')) slide.boardId = v('bBoard');
+  heroSlides.push(slide);
   showAdminTab('banner');
 }
 
 function toggleAttAdmin(mi, wi){
   const s = members[mi];
-  s.att[wi] = !s.att[wi]; // 낙관적 반영
-  addPoints(s, s.att[wi]?'주일예배 출석':'출석 체크 취소', s.att[wi]?20:-20);
-  if(s.att[wi]) s.lastAttended = attendance[wi].week.match(/\((.*)\)/)[1];
-  sb.rpc('ac_set_attendance', { target:s.id, wi, val:s.att[wi] }).then(({error})=>{
-    if(error){ alert('출석 저장 실패: '+error.message); }
-  });
+  s.att[wi] = !s.att[wi];
+  if(s.role==='student') addPoints(s, s.att[wi]?'주일예배 출석':'출석 체크 취소', s.att[wi]?20:-20);
+  if(s.att[wi] && s.role==='student'){
+    const d = attendance[wi].week.match(/\((.*)\)/)[1];
+    if(s.lastAttended==='-' || !s.lastAttended) s.lastAttended = d;
+    else s.lastAttended = d; // 프로토타입: 마지막 토글 주차로 갱신
+  }
   showAdminTab('students');
 }
 
@@ -1723,8 +1681,14 @@ const shopItems = [
   { emoji:'🏕️', name:'수련회 회비 5,000원 할인', cost:250 },
   { emoji:'🎫', name:'문화상품권 5,000원', cost:300 },
 ];
-let pointLog = [];    // Supabase ac_point_logs에서 로드
-let redemptions = []; // Supabase ac_redemptions에서 로드
+let pointLog = [
+  { name:'김하은', date:'06/11', label:'댓글 작성', amt:3 },
+  { name:'박서연', date:'06/11', label:'게시글 작성 (콘티)', amt:10 },
+  { name:'김하은', date:'06/10', label:'말씀 따라쓰기', amt:15 },
+];
+let redemptions = [
+  { name:'정민재', item:'매점 간식 쿠폰', date:'06/09', status:'done' },
+];
 
 function todayMD(){ const d=new Date(); return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'); }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
@@ -1745,8 +1709,8 @@ function addPoints(m, label, amt){
 
 function renderPoints(){
   const verse = verses[new Date().getDate() % verses.length];
-  const dailyDone = doneToday('웹 출석');
-  const verseDone = doneToday('말씀 따라쓰기');
+  const dailyDone = ME.lastDaily===todayISO();
+  const verseDone = ME.lastVerse===todayISO();
   const rank = members.filter(m=>m.role==='student' && m.status==='ok')
     .slice().sort((a,b)=>(b.points||0)-(a.points||0)).slice(0,5);
   const medals = ['🥇','🥈','🥉','4','5'];
@@ -1793,13 +1757,14 @@ function renderPoints(){
   </div>`;
 }
 
-function doneToday(label){ return pointLog.some(l=>l.name===ME.name && l.label===label && l.date===todayMD()); }
-async function dailyCheck(){
-  const r = await earn('daily');
-  if(r===-1) showToast('오늘은 이미 출석했어요!');
+function dailyCheck(){
+  if(ME.lastDaily===todayISO()) return;
+  ME.lastDaily = todayISO();
+  addPoints(ME, '웹 출석', 5);
   renderPoints();
 }
-async function verseSubmit(){
+function verseSubmit(){
+  if(ME.lastVerse===todayISO()) return;
   const verse = verses[new Date().getDate() % verses.length];
   const norm = s => s.replace(/\s+/g,'');
   const v = document.getElementById('vInput').value;
@@ -1808,36 +1773,34 @@ async function verseSubmit(){
     alert('구절과 조금 달라요! 다시 한 번 천천히 살펴보세요 🙂');
     return;
   }
-  const r = await earn('verse');
-  if(r===-1) showToast('오늘은 이미 완료했어요!');
+  ME.lastVerse = todayISO();
+  addPoints(ME, '말씀 따라쓰기', 15);
   renderPoints();
 }
-async function redeem(i){
+function redeem(i){
   const it = shopItems[i];
   if((ME.points||0) < it.cost){ alert(`포인트가 부족해요! (${it.cost-ME.points}P 더 모아야 해요)`); return; }
   if(!confirm(`${it.cost}P로 "${it.name}"을(를) 교환할까요?`)) return;
-  const { data, error } = await sb.rpc('ac_redeem_item', { idx:i });
-  if(err(error,'교환 실패')) return;
-  if(data!=='ok'){ alert('교환 실패: '+data); return; }
   ME.points -= it.cost;
   pointLog.unshift({ name:ME.name, date:todayMD(), label:`상점 교환 — ${it.name}`, amt:-it.cost });
   redemptions.unshift({ name:ME.name, item:it.name, date:todayMD(), status:'pending' });
+  addNoti(`🎁 ${ME.name} 상점 교환 신청: ${it.name}`, true);
   showToast('교환 신청 완료! 선생님 확인 후 지급돼요');
   renderPoints();
 }
-async function redeemDone(i){
-  const r = redemptions[i];
-  if(r._id){ const { error } = await sb.from('ac_redemptions').update({ status:'done' }).eq('id', r._id); if(err(error)) return; }
-  r.status = 'done';
+function redeemDone(i){
+  redemptions[i].status = 'done';
   showAdminTab('dash');
 }
 
 /* ================= 알림 ================= */
-let notifications = []; // Supabase ac_notifications에서 로드
+let notifications = [
+  { date:'06/12', text:'📢 이번 주 토요일(6/20) 체육대회! 운동복을 준비하세요', staff:false, read:false },
+  { date:'06/12', text:'🎂 박서연 생일이 다가와요 (6/15) — 축하 준비!', staff:true, read:false },
+];
 function visibleNotis(){ return notifications.filter(n=>!n.staff || isStaff()); }
 function addNoti(text, staffOnly){
-  notifications.unshift({ date:todayMD(), text, staff:!!staffOnly, read:true }); // 본인 발생 알림은 읽음 처리
-  sb.from('ac_notifications').insert({ text, staff_only:!!staffOnly }).then(()=>{});
+  notifications.unshift({ date:todayMD(), text, staff:!!staffOnly, read:false });
   renderBell();
 }
 function renderBell(){
@@ -1851,15 +1814,17 @@ function toggleNoti(){
       `<div class="noti-item"><div>${n.text}</div><div class="nd">${n.date}</div></div>`).join('')
       || '<div class="noti-item">알림이 없어요</div>';
     visibleNotis().forEach(n=>n.read=true);
-    sb.rpc('ac_mark_notis_read').then(()=>{});
     renderBell();
   }
 }
 
 /* ================= 수련회 신청 ================= */
-let retreatApps = []; // Supabase ac_retreat_apps에서 로드
+let retreatApps = [
+  { name:'박서연', cls:'고1 사랑반', fee:true,  note:'', date:'06/10' },
+  { name:'정민재', cls:'중3 기쁨반', fee:false, note:'회비는 주일에 제출할게요', date:'06/11' },
+];
 function openRetreatModal(){
-  const dup = retreatApps.find(a=>a._mid===MYID);
+  const dup = retreatApps.find(a=>a.name===ME.name);
   document.getElementById('modalRoot').innerHTML = `
   <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()">
     <div class="modal">
@@ -1879,19 +1844,48 @@ function openRetreatModal(){
     </div>
   </div>`;
 }
-async function retreatApply(){
-  const fee = document.getElementById('rFee').checked;
-  const note = document.getElementById('rNote').value.trim();
-  const { data, error } = await sb.from('ac_retreat_apps')
-    .insert({ member_id:MYID, fee, note }).select().single();
-  if(err(error,'신청 실패')) return;
-  retreatApps.push({ _id:data.id, _mid:MYID, name:ME.name, cls:ME.cls||'', fee, note, date:todayMD() });
+function retreatApply(){
+  retreatApps.push({ name:ME.name, cls:ME.cls||'', fee:document.getElementById('rFee').checked, note:document.getElementById('rNote').value.trim(), date:todayMD() });
   addNoti(`🏕️ ${ME.name} 수련회 신청!`, true);
   closeStudentModal();
   showToast('수련회 신청 완료! 🏕️');
 }
 
-/* 가입은 로그인 화면의 회원가입으로 통합됨 (auth 트리거가 승인대기 멤버 자동 생성) */
+/* ================= 새가족 가입 신청 ================= */
+function openSignupModal(){
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <div><div style="font-weight:800;font-size:1.15rem">✋ 새가족 가입 신청</div>
+        <div style="color:var(--sub);font-size:.85rem">선생님 승인 후 커뮤니티를 이용할 수 있어요</div></div>
+        <button class="modal-x" onclick="closeStudentModal()">✕</button>
+      </div>
+      <div style="display:grid;gap:10px">
+        <input type="text" id="suName" placeholder="이름 *" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none">
+        <input type="text" id="suSchool" placeholder="학교·학년 (예: 안천중 2학년)" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none">
+        <input type="text" id="suPhone" placeholder="연락처" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none">
+      </div>
+      <button class="approve-btn" style="margin-top:14px;width:100%;padding:12px" onclick="signupApply()">가입 신청하기</button>
+    </div>
+  </div>`;
+}
+function signupApply(){
+  const name = document.getElementById('suName').value.trim();
+  if(!name){ alert('이름을 입력해 주세요!'); return; }
+  if(members.find(m=>m.name===name)){ alert('이미 등록된 이름이에요. 선생님께 문의해 주세요!'); return; }
+  members.push({
+    name, role:'student', teams:[], points:0,
+    cls:'반 배정 예정', school:document.getElementById('suSchool').value.trim()||'-',
+    birthday:'-', phone:document.getElementById('suPhone').value.trim()||'-',
+    joined:todayISO(), status:'wait', att:[false,false,false,false], lastAttended:'-',
+    care:'new', careNote:'새가족 — 첫 정착 케어 필요', memos:[],
+  });
+  addNoti(`✋ ${name} 새가족 가입 신청 — 승인이 필요해요`, true);
+  closeStudentModal();
+  alert(`${name}님, 가입 신청 완료! 선생님 승인 후 이용할 수 있어요 😊`);
+  renderSidebar();
+}
 
 /* ================= 사진 업로드 ================= */
 let pendingImg = null, bannerPendingImg = null;
@@ -1927,169 +1921,51 @@ function handleBannerImg(inp){
   });
 }
 
-/* ================= Supabase 정식 백엔드 ================= */
+/* ================= 저장 — Supabase 공유 백엔드 ================= */
+/* 모든 구성원이 같은 데이터를 봅니다. (오프라인 시 localStorage 백업 사용) */
 const SUPA_URL = 'https://prqgrmudhnvhzfgxvjoj.supabase.co';
 const SUPA_KEY = 'sb_publishable_1g1mYUhqVCTgWZuAItdmIw_K2JvRI0b';
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+const supaHeaders = { apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json' };
+const SAVE_KEY = 'ancheon_proto_v1';
 
-function fmtDate(ts){ const d=new Date(ts); return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'); }
-function fmtTime(ts){
-  const d=new Date(ts), now=new Date();
-  return d.toDateString()===now.toDateString()
-    ? String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')
-    : fmtDate(ts);
+function snapshot(){
+  return { posts, prayers, members, heroSlides, pointLog, redemptions, retreatApps, notifications, postSeq };
 }
-function nameOf(id){ const m=members.find(x=>x.id===id); return m?m.name:'알 수 없음'; }
-function roleOf(id){ const m=members.find(x=>x.id===id); return m?m.role:'student'; }
-function err(e, msg){ if(e){ alert((msg||'요청 실패')+': '+(e.message||e)); return true; } return false; }
-
-/* ----- 인증 ----- */
-function showAuth(mode){
-  document.body.classList.add('authing');
-  document.getElementById('authView').classList.remove('hidden');
-  const card = document.getElementById('authCard');
-  const logo = `<div class="auth-logo">
-    <div style="width:38px;height:38px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">안</div>
-    <div style="font-weight:800;font-size:1.3rem">안천 <span style="color:var(--primary)">청소년부</span></div></div>`;
-  if(mode==='wait'){
-    card.innerHTML = logo + `<div style="text-align:center;padding:8px 0">
-      <div style="font-size:2.4rem">⏳</div>
-      <div style="font-weight:800;font-size:1.1rem;margin:8px 0">가입 승인 대기 중이에요</div>
-      <div style="color:var(--sub);font-size:.9rem;line-height:1.6">선생님이 승인하면 바로 이용할 수 있어요.</div>
-      <button class="auth-btn" style="margin-top:18px" onclick="location.reload()">새로고침</button>
-      <button style="margin-top:12px;color:var(--sub);font-size:.85rem;width:100%" onclick="logout()">로그아웃</button></div>`;
-    return;
-  }
-  const isLogin = mode!=='signup';
-  card.innerHTML = logo + `
-    <div class="auth-tabs">
-      <button class="${isLogin?'active':''}" onclick="showAuth('login')">로그인</button>
-      <button class="${!isLogin?'active':''}" onclick="showAuth('signup')">회원가입</button>
-    </div>
-    ${isLogin?'':'<input id="aName" placeholder="이름 (실명)" maxlength="10">'}
-    <input id="aEmail" type="email" placeholder="이메일">
-    <input id="aPw" type="password" placeholder="비밀번호 (6자 이상)" onkeydown="if(event.key==='Enter')${isLogin?'doLogin()':'doSignup()'}">
-    <div class="auth-err" id="aErr"></div>
-    <button class="auth-btn" id="aBtn" onclick="${isLogin?'doLogin()':'doSignup()'}">${isLogin?'로그인':'가입하기'}</button>
-    ${isLogin?'':'<div style="font-size:.78rem;color:var(--sub);margin-top:10px;line-height:1.5">가입 후 선생님 승인을 거쳐 이용할 수 있어요.</div>'}
-    <div style="text-align:center;margin-top:14px"><a href="proto.html" style="font-size:.78rem;color:var(--sub);text-decoration:underline">가입 없이 체험판 둘러보기</a></div>`;
+function applyState(d){
+  posts=d.posts; prayers=d.prayers; members=d.members; heroSlides=d.heroSlides;
+  pointLog=d.pointLog; redemptions=d.redemptions; retreatApps=d.retreatApps;
+  notifications=d.notifications; postSeq=d.postSeq;
 }
-function val(id){ return document.getElementById(id).value.trim(); }
-async function doLogin(){
-  const btn=document.getElementById('aBtn'); btn.disabled=true;
-  const { error } = await sb.auth.signInWithPassword({ email:val('aEmail'), password:val('aPw') });
-  btn.disabled=false;
-  if(error){ document.getElementById('aErr').textContent='로그인 실패 — 이메일/비밀번호를 확인해 주세요'; return; }
-  boot();
+function saveState(){
+  const data = snapshot();
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }catch(e){}
+  fetch(`${SUPA_URL}/rest/v1/app_state?id=eq.1`, {
+    method:'PATCH', headers:supaHeaders,
+    body: JSON.stringify({ data, updated_at:new Date().toISOString() }),
+  }).catch(()=>{});
 }
-async function doSignup(){
-  const name=val('aName');
-  if(!name){ document.getElementById('aErr').textContent='이름을 입력해 주세요'; return; }
-  const btn=document.getElementById('aBtn'); btn.disabled=true;
-  const { error } = await sb.auth.signUp({ email:val('aEmail'), password:val('aPw'), options:{ data:{ name } } });
-  btn.disabled=false;
-  if(error){ document.getElementById('aErr').textContent='가입 실패: '+error.message; return; }
-  setTimeout(boot, 600); // 멤버 생성 트리거 대기
-}
-async function logout(){ await sb.auth.signOut(); location.reload(); }
-
-async function boot(){
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ showAuth('login'); return; }
-  MYID = session.user.id;
-  try{ await loadAll(); }catch(e){ alert('데이터 로딩 실패: '+e.message); return; }
-  if(!ME || ME.status!=='ok'){ showAuth('wait'); return; }
-  startApp();
-}
-
-/* ----- 전체 로딩 ----- */
-async function loadAll(){
-  const [mem, pst, cmt, lk, pry, pp, ban, noti] = await Promise.all([
-    sb.from('ac_members').select('*').order('joined'),
-    sb.from('ac_posts').select('*').order('id'),
-    sb.from('ac_comments').select('*').order('id'),
-    sb.from('ac_post_likes').select('*'),
-    sb.from('ac_prayers').select('*').order('id'),
-    sb.from('ac_prayer_prays').select('*'),
-    sb.from('ac_banners').select('*').order('sort'),
-    sb.from('ac_notifications').select('*').order('id',{ascending:false}).limit(30),
-  ]);
-  members = (mem.data||[]).map(m=>({
-    id:m.id, name:m.name, role:m.role, teams:m.teams||[], siteAdmin:m.site_admin,
-    points:m.points, cls:m.cls, status:m.status, att:m.att||[false,false,false,false],
-    joined:String(m.joined||''), school:'-', birthday:'-', phone:'-',
-    care:null, careNote:'', lastAttended:'-', memos:[], _lastRead:m.last_noti_read,
-  }));
-  ME = members.find(m=>m.id===MYID) || null;
-  if(!ME) return;
-  if(ME.role!=='student'){ // 민감 정보는 교사·교역자만 (RLS)
-    const [priv, memos] = await Promise.all([
-      sb.from('ac_member_private').select('*'),
-      sb.from('ac_care_memos').select('*').order('id',{ascending:false}),
-    ]);
-    (priv.data||[]).forEach(p=>{ const m=members.find(x=>x.id===p.member_id); if(m){
-      m.school=p.school||'-'; m.birthday=p.birthday||'-'; m.phone=p.phone||'-';
-      m.care=p.care||null; m.careNote=p.care_note||''; m.lastAttended=p.last_attended||'-'; } });
-    (memos.data||[]).forEach(c=>{ const m=members.find(x=>x.id===c.member_id);
-      if(m) m.memos.push({ _id:c.id, date:fmtDate(c.created_at), text:c.text }); });
-  }
-  const cmtBy = {};
-  (cmt.data||[]).forEach(c=>{ (cmtBy[c.post_id]=cmtBy[c.post_id]||[]).push(
-    { _id:c.id, author:nameOf(c.author), role:roleOf(c.author), time:fmtTime(c.created_at), body:c.body }); });
-  const likeN={}, myLikes=new Set();
-  (lk.data||[]).forEach(l=>{ likeN[l.post_id]=(likeN[l.post_id]||0)+1; if(l.member_id===MYID) myLikes.add(l.post_id); });
-  posts = (pst.data||[]).map(p=>({
-    id:p.id, board:p.board, title:p.title, body:p.body, img:p.img_url, notice:p.notice,
-    views:p.views, author:nameOf(p.author), role:roleOf(p.author), _aid:p.author,
-    time:fmtTime(p.created_at), likes:likeN[p.id]||0, liked:myLikes.has(p.id), comments:cmtBy[p.id]||[],
-  }));
-  const ppN={}, myPrays=new Set();
-  (pp.data||[]).forEach(x=>{ ppN[x.prayer_id]=(ppN[x.prayer_id]||0)+1; if(x.member_id===MYID) myPrays.add(x.prayer_id); });
-  prayers = (pry.data||[]).map(p=>({
-    id:p.id, author:nameOf(p.author), role:roleOf(p.author), time:fmtTime(p.created_at),
-    body:p.body, count:ppN[p.id]||0, prayed:myPrays.has(p.id),
-  }));
-  heroSlides = (ban.data||[]).map(b=>({
-    _id:b.id, tag:b.tag, emoji:b.emoji, title:b.title, sub:b.sub, grad:b.grad,
-    img:b.img_url, postId:b.post_id, boardId:b.board_id, sort:b.sort,
-  }));
-  notifications = (noti.data||[]).map(n=>({
-    _id:n.id, text:n.text, staff:n.staff_only, date:fmtDate(n.created_at),
-    read: ME._lastRead ? (n.created_at <= ME._lastRead) : false,
-  }));
-  const [plog, ra, rd] = await Promise.all([
-    sb.from('ac_point_logs').select('*').order('id',{ascending:false}).limit(60),
-    sb.from('ac_retreat_apps').select('*').order('id'),
-    sb.from('ac_redemptions').select('*').order('id',{ascending:false}),
-  ]);
-  pointLog = (plog.data||[]).map(l=>({ name:nameOf(l.member_id), date:fmtDate(l.created_at), label:l.label, amt:l.amt }));
-  retreatApps = (ra.data||[]).map(a=>{ const m=members.find(x=>x.id===a.member_id)||{};
-    return { _id:a.id, _mid:a.member_id, name:m.name||'?', cls:m.cls||'', fee:a.fee, note:a.note, date:fmtDate(a.created_at) }; });
-  redemptions = (rd.data||[]).map(r=>({ _id:r.id, name:nameOf(r.member_id), item:r.item, date:fmtDate(r.created_at), status:r.status }));
-}
-
-/* ----- 포인트 적립 (서버 검증 RPC) ----- */
-async function earn(kind){
-  const { data, error } = await sb.rpc('ac_earn_points', { kind });
-  if(error) return null;
-  if(data === -1) return -1;
-  const lblMap = { daily:'웹 출석', verse:'말씀 따라쓰기', post:'게시글 작성', comment:'댓글 작성', prayer:'기도제목 나눔' };
-  ME.points += data;
-  pointLog.unshift({ name:ME.name, date:todayMD(), label:lblMap[kind], amt:data });
-  showToast(`+${data}P · ${lblMap[kind]} 🎉`);
-  return data;
-}
-
-/* ----- 사진 업로드 (Storage) ----- */
-async function uploadPhoto(dataUrl){
+async function loadState(){
   try{
-    const blob = await (await fetch(dataUrl)).blob();
-    const path = MYID.slice(0,8)+'-'+Date.now()+'.jpg';
-    const { error } = await sb.storage.from('ac-photos').upload(path, blob, { contentType:'image/jpeg' });
-    if(error) return null;
-    return sb.storage.from('ac-photos').getPublicUrl(path).data.publicUrl;
-  }catch(e){ return null; }
+    const r = await fetch(`${SUPA_URL}/rest/v1/app_state?id=eq.1&select=data`, { headers:supaHeaders });
+    const rows = await r.json();
+    if(rows && rows[0] && rows[0].data && rows[0].data.posts){ applyState(rows[0].data); return; }
+  }catch(e){ /* 오프라인 → localStorage 백업 */ }
+  try{
+    const s = localStorage.getItem(SAVE_KEY);
+    if(s){ const d = JSON.parse(s); if(d.posts) applyState(d); }
+  }catch(e){}
 }
+function resetData(){
+  if(!confirm('모든 데이터를 초기 상태로 되돌릴까요? (모든 사용자에게 적용됩니다)')) return;
+  localStorage.removeItem(SAVE_KEY);
+  fetch(`${SUPA_URL}/rest/v1/app_state?id=eq.1`, {
+    method:'PATCH', headers:supaHeaders, body:JSON.stringify({ data:{} }),
+  }).finally(()=>location.reload());
+}
+let saveTimer;
+function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveState, 300); }
+document.addEventListener('click', queueSave, true);
+document.addEventListener('keydown', queueSave, true);
 
 /* ================= 모바일 전체 메뉴 ================= */
 function openSheet(){
@@ -2099,6 +1975,7 @@ function openSheet(){
     ['✅','출석체크', "showView('attendance')"],
     ['📢','공지사항', "openBoard('notice')"],
     ['⛪','주보·예배', "openBoard('bulletin')"],
+    ['✋','가입 신청', 'openSignupModal()'],
   ];
   if(canAdmin()) items.push(['🛠️','관리자', "showView('admin')"]);
   document.getElementById('sheetBody').innerHTML = `
@@ -2145,7 +2022,11 @@ function doSearch(){
 }
 
 /* ================= 초기화 ================= */
-boot();
+switchPersona('hayeun'); // 우선 기본 데이터로 표시
+loadState().then(()=>{   // Supabase에서 공유 데이터 로드 후 갱신
+  switchPersona(document.getElementById('personaSelect').value);
+  renderBell();
+});
 </script>
 </body>
 </html>

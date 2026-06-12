@@ -633,6 +633,7 @@ header{
         <button onclick="showView('calendar')">📅 일정</button>
         <button onclick="showView('attendance')">✅ 출석체크</button>
         <button onclick="showView('points')">🎁 포인트</button>
+        <button onclick="openProfileModal()">📋 내 교적</button>
       </div>
     </div>
   </aside>
@@ -755,19 +756,8 @@ header{
 
   <!-- ===== Right sidebar ===== -->
   <aside id="rightbar">
-    <div class="card widget dday">
-      <div class="dd-label">다가오는 행사</div>
-      <div class="dd-title">🏕️ 여름 수련회</div>
-      <div class="dd-count" id="ddayCount"></div>
-      <button class="dday-apply" onclick="openRetreatModal()">🙌 수련회 신청하기</button>
-    </div>
-    <div class="card widget">
-      <h3>⛪ 이번 주 예배 안내</h3>
-      <div class="worship-row"><span class="k">주일예배</span><span class="v">주일 오전 11:00</span></div>
-      <div class="worship-row"><span class="k">장소</span><span class="v">교육관 2층</span></div>
-      <div class="worship-row"><span class="k">말씀</span><span class="v">이요한 전도사</span></div>
-      <div class="worship-row"><span class="k">본문</span><span class="v">시편 23편</span></div>
-    </div>
+    <div class="card widget dday" id="ddayWidget"></div>
+    <div class="card widget" id="worshipWidget"></div>
     <div class="card widget">
       <h3>🔥 HOT 게시글 <span class="more" onclick="openBoard('free')">더보기</span></h3>
       <div id="hotList"></div>
@@ -806,7 +796,9 @@ function canAdmin(){ return isStaff() || !!(ME && ME.siteAdmin); }
 
 function renderUserChip(){
   document.getElementById('userChip').innerHTML =
-    `<div class="avatar">${ME.name.slice(1,3)}</div>
+    `${ME.photo
+      ? `<img class="avatar" src="${ME.photo}" style="object-fit:cover" alt="">`
+      : `<div class="avatar">${ME.name.slice(1,3)}</div>`}
      <span style="font-weight:600;font-size:.9rem">${ME.name}</span>
      <button class="logout-btn" onclick="logout()">로그아웃</button>`;
 }
@@ -1044,7 +1036,7 @@ function renderHome(){
       <h3 onclick="openBoard('${b.id}')">${b.icon} ${b.name}<span class="arr">더보기 ›</span></h3>${items}
     </div>`;
   }).join('');
-  renderHot(); renderDday(); renderAttMini();
+  renderHot(); renderInfoWidgets(); renderAttMini();
 }
 
 /* 공지 배너 — 일반 공지 + 팀 공지(콘티 등)를 4초마다 순환 */
@@ -1082,9 +1074,105 @@ function renderHot(){
     </div>`).join('');
 }
 
-function renderDday(){
-  const d = Math.ceil((new Date('2026-07-24') - new Date())/86400000);
-  document.getElementById('ddayCount').textContent = 'D-'+d;
+/* 예배 안내·행사 정보 위젯 — 웹지기·임원·교사·교역자 수정 가능 */
+function canEditInfo(){
+  return isStaff() || !!(ME && ME.siteAdmin) || !!(ME && (ME.teams||[]).includes('leaders'));
+}
+function renderInfoWidgets(){
+  const w = SETTINGS.worship||{}, r = SETTINGS.retreat||{};
+  document.getElementById('worshipWidget').innerHTML = `
+    <h3>⛪ 이번 주 예배 안내 ${canEditInfo()?'<span class="more" onclick="openInfoModal(\'worship\')">✏️ 수정</span>':''}</h3>
+    <div class="worship-row"><span class="k">주일예배</span><span class="v">${w.time||'-'}</span></div>
+    <div class="worship-row"><span class="k">장소</span><span class="v">${w.place||'-'}</span></div>
+    <div class="worship-row"><span class="k">말씀</span><span class="v">${w.preacher||'-'}</span></div>
+    <div class="worship-row"><span class="k">본문</span><span class="v">${w.scripture||'-'}</span></div>`;
+  const d = Math.ceil((new Date(r.date||'2026-07-24') - new Date())/86400000);
+  document.getElementById('ddayWidget').innerHTML = `
+    <div class="dd-label">다가오는 행사 ${canEditInfo()?'<span style="float:right;cursor:pointer" onclick="openInfoModal(\'retreat\')">✏️</span>':''}</div>
+    <div class="dd-title">🏕️ ${r.title||'여름 수련회'}</div>
+    <div class="dd-count">${d>=0?'D-'+d:'진행중'}</div>
+    <button class="dday-apply" onclick="openRetreatModal()">🙌 수련회 신청하기</button>`;
+}
+function openInfoModal(k){
+  const v = SETTINGS[k]||{};
+  const fields = k==='worship'
+    ? [['time','예배 시간'],['place','장소'],['preacher','말씀(설교자)'],['scripture','본문']]
+    : [['title','행사명'],['date','D-day 기준일 (YYYY-MM-DD)'],['period','기간 표시 (예: 7/24(금)~26(주일))'],['place','장소'],['fee','회비']];
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()"><div class="modal">
+    <div class="modal-head"><div style="font-weight:800;font-size:1.1rem">${k==='worship'?'⛪ 예배 안내 수정':'🏕️ 행사 정보 수정'}</div>
+      <button class="modal-x" onclick="closeStudentModal()">✕</button></div>
+    ${fields.map(f=>`<div class="modal-label">${f[1]}</div>
+      <input id="if_${f[0]}" value="${String(v[f[0]]||'').replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">`).join('')}
+    <button class="auth-btn" style="margin-top:16px" onclick="saveInfo('${k}')">저장하기</button>
+  </div></div>`;
+}
+async function saveInfo(k){
+  const v = { ...(SETTINGS[k]||{}) };
+  document.querySelectorAll('[id^=if_]').forEach(i=>{ v[i.id.slice(3)] = i.value.trim(); });
+  const { error } = await sb.from('ac_settings').upsert({ key:k, value:v });
+  if(err(error,'저장 실패')) return;
+  SETTINGS[k] = v;
+  closeStudentModal();
+  renderInfoWidgets();
+  showToast('수정 완료!');
+}
+
+/* 내 교적 */
+function profileComplete(){
+  return !!(ME && ME.photo && ME.birthday!=='-' && ME.school!=='-' && ME.phone!=='-');
+}
+let pfPendingImg = null;
+function handlePfImg(inp){
+  if(!inp.files[0]) return;
+  resizeImage(inp.files[0], 400, url=>{
+    pfPendingImg = url;
+    const prev = document.getElementById('pfPrev');
+    prev.src = url; prev.classList.remove('hidden');
+  });
+}
+function openProfileModal(){
+  pfPendingImg = null;
+  const done = profileComplete();
+  const inp = 'width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none';
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()"><div class="modal">
+    <div class="modal-head"><div>
+      <div style="font-weight:800;font-size:1.1rem">📋 내 교적</div>
+      <div style="color:var(--sub);font-size:.85rem">${done?'작성 완료! 언제든 수정할 수 있어요':'사진과 정보를 모두 채우면 +100P! 🎁'}</div></div>
+      <button class="modal-x" onclick="closeStudentModal()">✕</button></div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+      <img id="pfPrev" src="${ME.photo||''}" class="${ME.photo?'':'hidden'}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-soft)" alt="내 사진">
+      <label style="font-size:.88rem;color:var(--sub);cursor:pointer">📷 내 사진 (필수)<br>
+        <input type="file" accept="image/*" onchange="handlePfImg(this)" style="font-size:.78rem;margin-top:4px"></label>
+    </div>
+    <div class="modal-label">생일</div><input type="date" id="pfBirth" value="${ME.birthday!=='-'?ME.birthday:''}" style="${inp}">
+    <div class="modal-label">학교·학년</div><input id="pfSchool" value="${ME.school!=='-'?ME.school:''}" placeholder="예: 안천중 2학년" style="${inp}">
+    <div class="modal-label">내 연락처</div><input id="pfPhone" value="${ME.phone!=='-'?ME.phone:''}" placeholder="010-0000-0000" style="${inp}">
+    <div class="modal-label">보호자 연락처 (선택)</div><input id="pfGuard" value="${ME.guardianPhone&&ME.guardianPhone!=='-'?ME.guardianPhone:''}" placeholder="010-0000-0000" style="${inp}">
+    <button class="auth-btn" style="margin-top:16px" onclick="saveProfile()">저장하기${done?'':' (+100P)'}</button>
+  </div></div>`;
+}
+async function saveProfile(){
+  if(pfPendingImg){
+    const url = await uploadPhoto(pfPendingImg);
+    if(url){ await sb.rpc('ac_set_photo', { url }); ME.photo = url; }
+    pfPendingImg = null;
+  }
+  const upd = {
+    birthday: document.getElementById('pfBirth').value || '-',
+    school: document.getElementById('pfSchool').value.trim() || '-',
+    phone: document.getElementById('pfPhone').value.trim() || '-',
+    guardian_phone: document.getElementById('pfGuard').value.trim() || '-',
+  };
+  const { error } = await sb.from('ac_member_private').update(upd).eq('member_id', MYID);
+  if(err(error,'저장 실패')) return;
+  ME.birthday=upd.birthday; ME.school=upd.school; ME.phone=upd.phone; ME.guardianPhone=upd.guardian_phone;
+  closeStudentModal();
+  renderUserChip();
+  const r = await earn('profile');
+  if(r===-2) showToast('교적이 저장됐어요! 모두 채우면 +100P 🎁');
+  else if(r===-1) showToast('교적이 수정됐어요!');
 }
 
 function renderAttMini(){
@@ -1512,7 +1600,9 @@ function openStudentModal(mi){
   <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()">
     <div class="modal">
       <div class="modal-head">
-        <span class="avatar" style="width:46px;height:46px;font-size:14px">${s.name.slice(1,3)}</span>
+        ${s.photo
+          ? `<img class="avatar" src="${s.photo}" style="width:46px;height:46px;object-fit:cover" alt="">`
+          : `<span class="avatar" style="width:46px;height:46px;font-size:14px">${s.name.slice(1,3)}</span>`}
         <div>
           <div style="font-weight:800;font-size:1.15rem">${s.name} ${careBadges(s)}</div>
           <div style="color:var(--sub);font-size:.85rem">${s.cls} · ${s.school}</div>
@@ -1522,6 +1612,7 @@ function openStudentModal(mi){
       <div class="info-grid">
         <div><span class="k">생일</span>${s.birthday}</div>
         <div><span class="k">연락처</span>${s.phone}</div>
+        <div><span class="k">보호자</span>${s.guardianPhone||'-'}</div>
         <div><span class="k">등록일</span>${s.joined}</div>
         <div><span class="k">최근 출석</span>${s.lastAttended}</div>
       </div>
@@ -1707,6 +1798,7 @@ function toggleAttAdmin(mi, wi){
 
 /* ================= 포인트 시스템 ================= */
 const pointRuleRows = [
+  ['교적 작성 (최초 1회)','+100P'],
   ['게시글 작성','+10P'], ['댓글 작성','+3P'], ['기도제목 나눔','+5P'],
   ['웹 출석 (하루 1회)','+5P'], ['말씀 따라쓰기 (하루 1회)','+15P'], ['주일예배 출석 (선생님 체크)','+20P'],
 ];
@@ -1718,10 +1810,10 @@ const verses = [
   { ref:'여호수아 1:9', text:'강하고 담대하라 두려워하지 말며 놀라지 말라 네가 어디로 가든지 네 하나님 여호와가 너와 함께 하느니라' },
 ];
 const shopItems = [
-  { emoji:'🍫', name:'매점 간식 쿠폰', cost:50 },
-  { emoji:'☕', name:'카페 음료 쿠폰', cost:120 },
-  { emoji:'🏕️', name:'수련회 회비 5,000원 할인', cost:250 },
-  { emoji:'🎫', name:'문화상품권 5,000원', cost:300 },
+  { emoji:'🍫', name:'매점 간식 쿠폰', cost:150 },
+  { emoji:'☕', name:'카페 음료 쿠폰', cost:220 },
+  { emoji:'🏕️', name:'수련회 회비 5,000원 할인', cost:350 },
+  { emoji:'🎫', name:'문화상품권 5,000원', cost:400 },
 ];
 let pointLog = [];    // Supabase ac_point_logs에서 로드
 let redemptions = []; // Supabase ac_redemptions에서 로드
@@ -1759,6 +1851,11 @@ function renderPoints(){
       <div class="pv">${ME.points||0}P</div>
       <button class="pt-btn" onclick="dailyCheck()" ${dailyDone?'disabled':''}>${dailyDone?'오늘 웹 출석 완료 ✓':'📅 오늘의 웹 출석 +5P'}</button>
     </div>
+    ${profileComplete()?'':`<div class="card widget" style="border-color:var(--primary)">
+      <h3>📋 교적 작성하고 +100P 받기!</h3>
+      <div style="font-size:.88rem;color:var(--sub);margin-bottom:10px">내 사진·생일·학교·연락처를 채우면 100포인트를 드려요.</div>
+      <button class="approve-btn" style="padding:9px 18px" onclick="openProfileModal()">교적 작성하기</button>
+    </div>`}
     <div class="card widget">
       <h3>✍️ 오늘의 말씀 따라쓰기 <span class="more">+15P · 하루 1회</span></h3>
       <div class="verse-box" oncopy="return false" oncontextmenu="return false">
@@ -1864,15 +1961,15 @@ function openRetreatModal(){
   <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()">
     <div class="modal">
       <div class="modal-head">
-        <div><div style="font-weight:800;font-size:1.15rem">🏕️ 여름 수련회 신청</div>
-        <div style="color:var(--sub);font-size:.85rem">7/24(금)~26(주일) · 가평 수양관 · 회비 50,000원</div></div>
+        <div><div style="font-weight:800;font-size:1.15rem">🏕️ ${(SETTINGS.retreat||{}).title||'여름 수련회'} 신청</div>
+        <div style="color:var(--sub);font-size:.85rem">${(SETTINGS.retreat||{}).period||''} · ${(SETTINGS.retreat||{}).place||''} · 회비 ${(SETTINGS.retreat||{}).fee||''}</div></div>
         <button class="modal-x" onclick="closeStudentModal()">✕</button>
       </div>
       ${dup ? `<div class="cp-empty" style="padding:20px;text-align:center">이미 신청했어요! (${dup.date}) 🙌<br>변경은 담당 선생님께 말씀해 주세요.</div>` : `
       <div class="modal-label">신청자</div>
       <input type="text" value="${ME.name} (${ME.cls||''})" disabled style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--bg)">
       <div class="modal-label">회비</div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:.92rem"><input type="checkbox" id="rFee"> 회비 50,000원을 납부했어요 (또는 납부 예정)</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.92rem"><input type="checkbox" id="rFee"> 회비 ${(SETTINGS.retreat||{}).fee||''}을(를) 납부했어요 (또는 납부 예정)</label>
       <div class="modal-label">참고사항 (선택)</div>
       <input type="text" id="rNote" placeholder="알레르기, 약 복용 등 선생님이 알아야 할 내용" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
       <button class="approve-btn" style="margin-top:16px;width:100%;padding:12px" onclick="retreatApply()">신청하기</button>`}
@@ -1931,6 +2028,7 @@ function handleBannerImg(inp){
 const SUPA_URL = 'https://prqgrmudhnvhzfgxvjoj.supabase.co';
 const SUPA_KEY = 'sb_publishable_1g1mYUhqVCTgWZuAItdmIw_K2JvRI0b';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+let SETTINGS = { worship:{}, retreat:{} }; // ac_settings에서 로드 (예배 안내·행사 정보)
 
 function fmtDate(ts){ const d=new Date(ts); return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'); }
 function fmtTime(ts){
@@ -2042,22 +2140,25 @@ async function loadAll(){
   members = (mem.data||[]).map(m=>({
     id:m.id, name:m.name, role:m.role, teams:m.teams||[], siteAdmin:m.site_admin,
     points:m.points, cls:m.cls, status:m.status, att:m.att||[false,false,false,false],
-    joined:String(m.joined||''), school:'-', birthday:'-', phone:'-',
+    joined:String(m.joined||''), school:'-', birthday:'-', phone:'-', guardianPhone:'-',
+    photo:m.photo_url||null,
     care:null, careNote:'', lastAttended:'-', memos:[], _lastRead:m.last_noti_read,
   }));
   ME = members.find(m=>m.id===MYID) || null;
   if(!ME) return;
-  if(ME.role!=='student'){ // 민감 정보는 교사·교역자만 (RLS)
-    const [priv, memos] = await Promise.all([
-      sb.from('ac_member_private').select('*'),
-      sb.from('ac_care_memos').select('*').order('id',{ascending:false}),
-    ]);
-    (priv.data||[]).forEach(p=>{ const m=members.find(x=>x.id===p.member_id); if(m){
-      m.school=p.school||'-'; m.birthday=p.birthday||'-'; m.phone=p.phone||'-';
-      m.care=p.care||null; m.careNote=p.care_note||''; m.lastAttended=p.last_attended||'-'; } });
-    (memos.data||[]).forEach(c=>{ const m=members.find(x=>x.id===c.member_id);
-      if(m) m.memos.push({ _id:c.id, date:fmtDate(c.created_at), text:c.text }); });
-  }
+  // 교적: RLS가 알아서 필터 (교사·교역자=전체, 학생=본인 것만)
+  const [priv, memos, st] = await Promise.all([
+    sb.from('ac_member_private').select('*'),
+    ME.role!=='student' ? sb.from('ac_care_memos').select('*').order('id',{ascending:false}) : Promise.resolve({data:[]}),
+    sb.from('ac_settings').select('*'),
+  ]);
+  (priv.data||[]).forEach(p=>{ const m=members.find(x=>x.id===p.member_id); if(m){
+    m.school=p.school||'-'; m.birthday=p.birthday||'-'; m.phone=p.phone||'-';
+    m.guardianPhone=p.guardian_phone||'-';
+    m.care=p.care||null; m.careNote=p.care_note||''; m.lastAttended=p.last_attended||'-'; } });
+  (memos.data||[]).forEach(c=>{ const m=members.find(x=>x.id===c.member_id);
+    if(m) m.memos.push({ _id:c.id, date:fmtDate(c.created_at), text:c.text }); });
+  (st.data||[]).forEach(r=>{ SETTINGS[r.key] = r.value; });
   const cmtBy = {};
   (cmt.data||[]).forEach(c=>{ (cmtBy[c.post_id]=cmtBy[c.post_id]||[]).push(
     { _id:c.id, author:nameOf(c.author), role:roleOf(c.author), time:fmtTime(c.created_at), body:c.body }); });
@@ -2098,7 +2199,7 @@ async function earn(kind){
   const { data, error } = await sb.rpc('ac_earn_points', { kind });
   if(error) return null;
   if(data === -1) return -1;
-  const lblMap = { daily:'웹 출석', verse:'말씀 따라쓰기', post:'게시글 작성', comment:'댓글 작성', prayer:'기도제목 나눔' };
+  const lblMap = { daily:'웹 출석', verse:'말씀 따라쓰기', post:'게시글 작성', comment:'댓글 작성', prayer:'기도제목 나눔', profile:'교적 작성' };
   ME.points += data;
   pointLog.unshift({ name:ME.name, date:todayMD(), label:lblMap[kind], amt:data });
   showToast(`+${data}P · ${lblMap[kind]} 🎉`);
@@ -2124,6 +2225,7 @@ function openSheet(){
     ['✅','출석체크', "showView('attendance')"],
     ['📢','공지사항', "openBoard('notice')"],
     ['⛪','주보·예배', "openBoard('bulletin')"],
+    ['📋','내 교적', 'openProfileModal()'],
   ];
   if(canAdmin()) items.push(['🛠️','관리자', "showView('admin')"]);
   document.getElementById('sheetBody').innerHTML = `

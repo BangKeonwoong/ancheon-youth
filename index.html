@@ -2110,7 +2110,16 @@ async function doEnsure(){
   const btn = document.getElementById('aBtn'); btn.disabled = true;
   const { error } = await sb.rpc('ac_ensure_member', { nm:name });
   btn.disabled = false;
-  if(error){ document.getElementById('aErr').textContent='실패: '+error.message; return; }
+  if(error){
+    if(/foreign key/i.test(error.message)){
+      alert('이전 로그인 정보가 만료됐어요. 다시 로그인해 주세요!');
+      await sb.auth.signOut();
+      location.reload();
+      return;
+    }
+    document.getElementById('aErr').textContent='실패: '+error.message;
+    return;
+  }
   boot();
 }
 async function logout(){ await sb.auth.signOut(); location.reload(); }
@@ -2118,7 +2127,10 @@ async function logout(){ await sb.auth.signOut(); location.reload(); }
 async function boot(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showAuth('login'); return; }
-  MYID = session.user.id;
+  // 세션이 서버에서도 유효한지 확인 (삭제된 계정의 옛 세션 정리)
+  const { data:{ user }, error:uErr } = await sb.auth.getUser();
+  if(uErr || !user){ await sb.auth.signOut(); showAuth('login'); return; }
+  MYID = user.id;
   try{ await loadAll(); }catch(e){ alert('데이터 로딩 실패: '+e.message); return; }
   if(!ME){ showAuth('name'); return; }           // 기존 계정 → 이름 입력 후 멤버 생성
   if(ME.status!=='ok'){ showAuth('wait'); return; }

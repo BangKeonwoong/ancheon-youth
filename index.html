@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>안천 청소년부 커뮤니티</title>
+<meta name="description" content="안천교회 청소년부 커뮤니티 — 게시판, 기도제목, 일정, 출석체크, 포인트">
+<meta property="og:title" content="안천 청소년부 커뮤니티">
+<meta property="og:description" content="안천교회 청소년부 친구들의 온라인 아지트">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ===== 로그인/가입 ===== */
@@ -722,7 +726,7 @@ header{
         <p style="margin-top:10px;font-size:.92rem;color:var(--primary);font-weight:600">출석 체크는 예배 후 담당 선생님이 해 주세요 😊</p>
       </div>
       <div class="card att-weeks" style="margin-top:12px">
-        <h3 style="font-size:.95rem;font-weight:700;margin-bottom:6px">6월 출석 현황</h3>
+        <h3 style="font-size:.95rem;font-weight:700;margin-bottom:6px" id="attMonthTitle">출석 현황</h3>
         <div id="attWeeks"></div>
       </div>
     </section>
@@ -790,6 +794,12 @@ header{
 /* ================= 데이터 ================= */
 let ME = null, MYID = null;
 
+/* XSS 방지: 사용자 입력(제목·본문·댓글·이름 등)을 innerHTML에 넣을 때 항상 esc()로 감싼다 */
+function esc(s){
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function isStaff(){ return !!ME && ME.role !== 'student'; }
 /* 웹페이지 관리자: 교사·교역자 전체 권한, 학생 웹지기는 게시글·배너 관리만 */
 function canAdmin(){ return isStaff() || !!(ME && ME.siteAdmin); }
@@ -797,9 +807,9 @@ function canAdmin(){ return isStaff() || !!(ME && ME.siteAdmin); }
 function renderUserChip(){
   document.getElementById('userChip').innerHTML =
     `${ME.photo
-      ? `<img class="avatar" src="${ME.photo}" style="object-fit:cover" alt="">`
-      : `<div class="avatar">${ME.name.slice(1,3)}</div>`}
-     <span style="font-weight:600;font-size:.9rem">${ME.name}</span>
+      ? `<img class="avatar" src="${esc(ME.photo)}" style="object-fit:cover" alt="">`
+      : `<div class="avatar">${esc(ME.name.slice(1,3))}</div>`}
+     <span style="font-weight:600;font-size:.9rem">${esc(ME.name)}</span>
      <button class="logout-btn" onclick="logout()">로그아웃</button>`;
 }
 function startApp(){
@@ -836,10 +846,9 @@ let members = []; // Supabase ac_members에서 로드
 const careTypes = { sick:'질병', new:'새가족', watch:'집중관찰' };
 
 function weeksAbsent(s){
-  if(!s.lastAttended || s.lastAttended==='-') return 0;
-  const [m,d] = s.lastAttended.split('/').map(Number);
-  const days = Math.floor((new Date() - new Date(2026, m-1, d)) / 86400000);
-  return Math.floor(days/7);
+  if(!s.lastAttendedDate) return 0;
+  const days = Math.floor((new Date() - new Date(s.lastAttendedDate + 'T00:00:00')) / 86400000);
+  return Math.floor(days / 7);
 }
 
 function careBadges(s){
@@ -941,12 +950,26 @@ const events = [
   { date:'2026-07-24', title:'여름 수련회 (1일차)', sub:'가평 수양관 · 7/24~26' },
 ];
 
-const attendance = [
-  { week:'6월 1주 (6/7)',  scripture:'요한복음 10장' },
-  { week:'6월 2주 (6/14)', scripture:'시편 23편', current:true },
-  { week:'6월 3주 (6/21)', scripture:'-' },
-  { week:'6월 4주 (6/28)', scripture:'-' },
-];
+/* 이번 달 주일(일요일)을 자동 생성 — 매달 코드를 수정할 필요가 없어요 */
+function ymdStr(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function monthSundays(y, m){ // m: 0부터 시작
+  const list = [];
+  const d = new Date(y, m, 1);
+  d.setDate(1 + (7 - d.getDay()) % 7); // 이 달의 첫 주일
+  while(d.getMonth() === m){ list.push(new Date(d)); d.setDate(d.getDate() + 7); }
+  return list;
+}
+const attendance = (()=>{
+  const now = new Date();
+  const thisSunday = new Date(now); thisSunday.setDate(now.getDate() - now.getDay()); // 이번 주 주일
+  return monthSundays(now.getFullYear(), now.getMonth()).map((d, i)=>({
+    week: `${d.getMonth()+1}월 ${i+1}주 (${d.getMonth()+1}/${d.getDate()})`,
+    ymd: ymdStr(d), scripture: '-',
+    current: d.toDateString() === thisSunday.toDateString(),
+  }));
+})();
 
 /* ================= 네비게이션 ================= */
 const views = ['home','board','post','write','prayer','calendar','attendance','search','admin','points'];
@@ -989,13 +1012,13 @@ function renderHero(){
   const h = document.getElementById('hero');
   h.innerHTML = heroSlides.map((s,i)=>`
     <div class="hero-slide ${i===heroIdx?'on':''}"
-      style="${s.img ? `background-image:url('${s.img}')` : `background:${s.grad}`}"
+      style="${s.img ? `background-image:url('${esc(s.img)}')` : `background:${s.grad}`}"
       onclick="heroClick(${i})">
-      ${s.img ? '' : `<span class="hs-emoji">${s.emoji}</span>`}
+      ${s.img ? '' : `<span class="hs-emoji">${esc(s.emoji)}</span>`}
       <div class="hs-body">
-        <span class="hs-tag">${s.tag}</span>
-        <div class="hs-title">${s.title}</div>
-        <div class="hs-sub">${s.sub}</div>
+        <span class="hs-tag">${esc(s.tag)}</span>
+        <div class="hs-title">${esc(s.title)}</div>
+        <div class="hs-sub">${esc(s.sub)}</div>
       </div>
     </div>`).join('')
   + `<button class="hero-arrow l" onclick="event.stopPropagation();heroGo(heroIdx-1)">‹</button>
@@ -1028,7 +1051,7 @@ function renderHome(){
     const list = pool.slice().reverse().slice(0,4);
     const items = list.map(p=>
       `<div class="bp-item" onclick="openPost(${p.id})">
-        <span class="t">${p.title}</span>
+        <span class="t">${esc(p.title)}</span>
         ${p.comments.length?`<span class="c">[${p.comments.length}]</span>`:''}
         <span class="meta">${p.time}</span>
       </div>`).join('') || '<div class="bp-item" style="color:var(--sub)">아직 글이 없어요</div>';
@@ -1054,7 +1077,7 @@ function renderNoticeBanner(){
   const b = boards.find(x=>x.id===n.board);
   banner.innerHTML = `
     <span class="tag">${b.group==='team' ? b.icon+' '+b.name : '공지'}</span>
-    <span class="txt">${n.title}</span>
+    <span class="txt">${esc(n.title)}</span>
     ${list.length>1?`<span class="nb-count">${noticeBannerIdx+1}/${list.length}</span>`:''}`;
   banner.onclick = ()=>openPost(n.id);
 }
@@ -1070,7 +1093,7 @@ function renderHot(){
   const hot = posts.filter(canSeePost).slice().sort((a,b)=>b.likes-a.likes).slice(0,5);
   document.getElementById('hotList').innerHTML = hot.map((p,i)=>
     `<div class="hot-item" onclick="openPost(${p.id})">
-      <span class="rank">${i+1}</span><span class="t">${p.title}</span><span class="lk">♥ ${p.likes}</span>
+      <span class="rank">${i+1}</span><span class="t">${esc(p.title)}</span><span class="lk">♥ ${p.likes}</span>
     </div>`).join('');
 }
 
@@ -1082,14 +1105,14 @@ function renderInfoWidgets(){
   const w = SETTINGS.worship||{}, r = SETTINGS.retreat||{};
   document.getElementById('worshipWidget').innerHTML = `
     <h3>⛪ 이번 주 예배 안내 ${canEditInfo()?'<span class="more" onclick="openInfoModal(\'worship\')">✏️ 수정</span>':''}</h3>
-    <div class="worship-row"><span class="k">주일예배</span><span class="v">${w.time||'-'}</span></div>
-    <div class="worship-row"><span class="k">장소</span><span class="v">${w.place||'-'}</span></div>
-    <div class="worship-row"><span class="k">말씀</span><span class="v">${w.preacher||'-'}</span></div>
-    <div class="worship-row"><span class="k">본문</span><span class="v">${w.scripture||'-'}</span></div>`;
+    <div class="worship-row"><span class="k">주일예배</span><span class="v">${esc(w.time||'-')}</span></div>
+    <div class="worship-row"><span class="k">장소</span><span class="v">${esc(w.place||'-')}</span></div>
+    <div class="worship-row"><span class="k">말씀</span><span class="v">${esc(w.preacher||'-')}</span></div>
+    <div class="worship-row"><span class="k">본문</span><span class="v">${esc(w.scripture||'-')}</span></div>`;
   const d = Math.ceil((new Date(r.date||'2026-07-24') - new Date())/86400000);
   document.getElementById('ddayWidget').innerHTML = `
     <div class="dd-label">다가오는 행사 ${canEditInfo()?'<span style="float:right;cursor:pointer" onclick="openInfoModal(\'retreat\')">✏️</span>':''}</div>
-    <div class="dd-title">🏕️ ${r.title||'여름 수련회'}</div>
+    <div class="dd-title">🏕️ ${esc(r.title||'여름 수련회')}</div>
     <div class="dd-count">${d>=0?'D-'+d:'진행중'}</div>
     <button class="dday-apply" onclick="openRetreatModal()">🙌 수련회 신청하기</button>`;
 }
@@ -1103,7 +1126,7 @@ function openInfoModal(k){
     <div class="modal-head"><div style="font-weight:800;font-size:1.1rem">${k==='worship'?'⛪ 예배 안내 수정':'🏕️ 행사 정보 수정'}</div>
       <button class="modal-x" onclick="closeStudentModal()">✕</button></div>
     ${fields.map(f=>`<div class="modal-label">${f[1]}</div>
-      <input id="if_${f[0]}" value="${String(v[f[0]]||'').replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">`).join('')}
+      <input id="if_${f[0]}" value="${esc(v[f[0]]||'')}" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">`).join('')}
     <button class="auth-btn" style="margin-top:16px" onclick="saveInfo('${k}')">저장하기</button>
   </div></div>`;
 }
@@ -1142,21 +1165,21 @@ function openProfileModal(){
       <div style="color:var(--sub);font-size:.85rem">${done?'작성 완료! 언제든 수정할 수 있어요':'사진과 정보를 모두 채우면 +100P! 🎁'}</div></div>
       <button class="modal-x" onclick="closeStudentModal()">✕</button></div>
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
-      <img id="pfPrev" src="${ME.photo||''}" class="${ME.photo?'':'hidden'}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-soft)" alt="내 사진">
+      <img id="pfPrev" src="${esc(ME.photo||'')}" class="${ME.photo?'':'hidden'}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-soft)" alt="내 사진">
       <label style="font-size:.88rem;color:var(--sub);cursor:pointer">📷 내 사진 (필수)<br>
         <input type="file" accept="image/*" onchange="handlePfImg(this)" style="font-size:.78rem;margin-top:4px"></label>
     </div>
-    <div class="modal-label">생일</div><input type="date" id="pfBirth" value="${ME.birthday!=='-'?ME.birthday:''}" style="${inp}">
-    <div class="modal-label">학교·학년</div><input id="pfSchool" value="${ME.school!=='-'?ME.school:''}" placeholder="예: 안천중 2학년" style="${inp}">
-    <div class="modal-label">내 연락처</div><input id="pfPhone" value="${ME.phone!=='-'?ME.phone:''}" placeholder="010-0000-0000" style="${inp}">
-    <div class="modal-label">보호자 연락처 (선택)</div><input id="pfGuard" value="${ME.guardianPhone&&ME.guardianPhone!=='-'?ME.guardianPhone:''}" placeholder="010-0000-0000" style="${inp}">
+    <div class="modal-label">생일</div><input type="date" id="pfBirth" value="${esc(ME.birthday!=='-'?ME.birthday:'')}" style="${inp}">
+    <div class="modal-label">학교·학년</div><input id="pfSchool" value="${esc(ME.school!=='-'?ME.school:'')}" placeholder="예: 안천중 2학년" style="${inp}">
+    <div class="modal-label">내 연락처</div><input id="pfPhone" value="${esc(ME.phone!=='-'?ME.phone:'')}" placeholder="010-0000-0000" style="${inp}">
+    <div class="modal-label">보호자 연락처 (선택)</div><input id="pfGuard" value="${esc(ME.guardianPhone&&ME.guardianPhone!=='-'?ME.guardianPhone:'')}" placeholder="010-0000-0000" style="${inp}">
     <button class="auth-btn" style="margin-top:16px" onclick="saveProfile()">저장하기${done?'':' (+100P)'}</button>
   </div></div>`;
 }
 async function saveProfile(){
   if(pfPendingImg){
     const url = await uploadPhoto(pfPendingImg);
-    if(url){ await sb.rpc('ac_set_photo', { url }); ME.photo = url; }
+    if(url){ await sb.rpc('ac_set_photo', { url }); ME.photo = await signedOrOriginal(url); }
     pfPendingImg = null;
   }
   const upd = {
@@ -1204,10 +1227,10 @@ function openBoard(id){
       <div class="title-wrap">
         ${p.board!==id?`<span class="badge origin">${boards.find(x=>x.id===p.board).icon} ${boards.find(x=>x.id===p.board).name}</span>`:''}
         ${p.likes>=15?'<span class="badge hot-badge">HOT</span>':''}
-        <span class="title">${p.title}</span>
+        <span class="title">${esc(p.title)}</span>
         ${p.comments.length?`<span class="cmt">[${p.comments.length}]</span>`:''}
       </div>
-      <span class="author">${p.author}${badge(p.role)}</span>
+      <span class="author">${esc(p.author)}${badge(p.role)}</span>
       <span class="time">${p.time}</span>
       <span class="views">${p.views}</span>
       <span class="likes">${p.likes}</span>
@@ -1237,20 +1260,20 @@ function renderPostDetail(){
   const b = boards.find(x=>x.id===p.board);
   const cmts = p.comments.map((c,i)=>
     `<div class="comment">
-      <div class="ch"><span class="ca">${c.author}${badge(c.role)}</span><span class="ct">${c.time}</span>
+      <div class="ch"><span class="ca">${esc(c.author)}${badge(c.role)}</span><span class="ct">${c.time}</span>
         ${canModerate()?`<button class="cmt-del" title="댓글 삭제 (관리자)" onclick="deleteComment(${i})">✕ 삭제</button>`:''}</div>
-      <div class="cb">${c.body}</div>
+      <div class="cb">${esc(c.body)}</div>
     </div>`).join('');
   document.getElementById('postDetail').innerHTML = `
     <span class="pd-board" onclick="openBoard('${b.id}')">${b.icon} ${b.name} ›</span>
     ${!canSeeBoard(b)?`<div style="background:var(--primary-soft);color:var(--primary);font-size:.82rem;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:10px">📢 ${b.name} 게시판의 공지글이라 전체 구성원에게 공개된 글이에요</div>`:''}
-    <div class="pd-title">${p.title}</div>
+    <div class="pd-title">${esc(p.title)}</div>
     <div class="pd-meta">
-      <span class="author"><span class="avatar">${p.author.slice(0,2)}</span>${p.author}${badge(p.role)}</span>
+      <span class="author"><span class="avatar">${esc(p.author.slice(0,2))}</span>${esc(p.author)}${badge(p.role)}</span>
       <span>${p.time}</span><span>조회 ${p.views}</span>
     </div>
-    ${p.img?`<img class="post-img" src="${p.img}" alt="첨부 사진">`:''}
-    <div class="pd-body">${p.body}</div>
+    ${p.img?`<img class="post-img" src="${esc(p.img)}" alt="첨부 사진">`:''}
+    <div class="pd-body">${esc(p.body)}</div>
     <div class="pd-actions">
       <button class="act-btn ${p.liked?'on':''}" onclick="toggleLike()">👍 좋아요 ${p.likes}</button>
       <button class="act-btn" onclick="alert('프로토타입에서는 준비 중인 기능이에요 :)')">🔗 공유</button>
@@ -1324,7 +1347,7 @@ async function submitPost(){
   const { data, error } = await sb.from('ac_posts')
     .insert({ board, title, body, notice:pin, img_url, author:MYID }).select().single();
   if(err(error,'글 등록 실패')) return;
-  posts.push({ id:data.id, board, title, body, img:img_url, notice:pin, views:0,
+  posts.push({ id:data.id, board, title, body, img:await signedOrOriginal(img_url), notice:pin, views:0,
     author:ME.name, role:ME.role, _aid:MYID, time:'방금', likes:0, liked:false, comments:[] });
   document.getElementById('wTitle').value='';
   document.getElementById('wBody').value='';
@@ -1341,8 +1364,8 @@ async function submitPost(){
 function renderPrayers(){
   document.getElementById('prayerGrid').innerHTML = prayers.slice().reverse().map(p=>
     `<div class="card prayer-card">
-      <div class="ph"><span class="avatar">${p.author.slice(0,2)}</span><span class="pa">${p.author}${badge(p.role)}</span><span class="pt">${p.time}</span></div>
-      <div class="pb">${p.body}</div>
+      <div class="ph"><span class="avatar">${esc(p.author.slice(0,2))}</span><span class="pa">${esc(p.author)}${badge(p.role)}</span><span class="pt">${p.time}</span></div>
+      <div class="pb">${esc(p.body)}</div>
       <button class="pray-btn ${p.prayed?'on':''}" onclick="pray(${p.id})">🙏 함께 기도해요 <b>${p.count}</b></button>
     </div>`).join('');
 }
@@ -1367,7 +1390,7 @@ async function addPrayer(){
 }
 
 /* ================= 일정 ================= */
-let calY = 2026, calM = 5; // 0-indexed June
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
 function moveMonth(d){
   calM += d;
   if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;}
@@ -1401,9 +1424,10 @@ function renderCalendar(){
 /* ================= 출석체크 ================= */
 function renderAttendance(){
   const my = ME.att;
-  const streakN = 4 + (my[0] ? 1 + (my[1]?1:0) : 0);
+  document.getElementById('attMonthTitle').textContent = (new Date().getMonth()+1) + '월 출석 현황';
+  const n = my.filter(Boolean).length;
   document.getElementById('attStreak').textContent =
-    my[0] ? `🔥 ${streakN}주 연속 출석 중!` : `이번 달 출석 ${my.filter(Boolean).length}회`;
+    n ? `🔥 이번 달 ${n}회 출석!` : '이번 달 출석 0회';
   document.getElementById('attWeeks').innerHTML = attendance.map((a,i)=>
     `<div class="att-week-row">
       <span class="att-mark ${my[i]?'on':''}">${my[i]?'✓':'·'}</span>
@@ -1433,7 +1457,9 @@ function showAdminTab(tab){
 function adminDash(){
   const totalCmts = posts.reduce((s,p)=>s+p.comments.length,0);
   const students = members.filter(m=>m.role==='student' && m.status==='ok');
-  const rate = students.length ? Math.round(students.filter(m=>m.att[0]).length / students.length * 100) : 0;
+  // 가장 최근에 지나간(또는 오늘인) 주일 기준 출석률
+  const doneIdx = (()=>{ const t = ymdStr(new Date()); let k = -1; attendance.forEach((a,i)=>{ if(a.ymd <= t) k = i; }); return k; })();
+  const rate = (students.length && doneIdx >= 0) ? Math.round(students.filter(m=>m.att[doneIdx]).length / students.length * 100) : 0;
   const wait = members.filter(m=>m.status==='wait');
   const recent = posts.slice().reverse().slice(0,5);
   return `
@@ -1441,7 +1467,7 @@ function adminDash(){
     <div class="card stat-card"><div class="sv">${members.length}</div><div class="sk">전체 멤버</div></div>
     <div class="card stat-card"><div class="sv">${posts.length}</div><div class="sk">전체 게시글</div></div>
     <div class="card stat-card"><div class="sv">${totalCmts}</div><div class="sk">전체 댓글</div></div>
-    <div class="card stat-card"><div class="sv">${rate}%</div><div class="sk">지난주 출석률 (6/7)</div></div>
+    <div class="card stat-card"><div class="sv">${rate}%</div><div class="sk">${doneIdx>=0 ? '최근 주일 출석률 ('+attendance[doneIdx].week.match(/\((.*)\)/)[1]+')' : '출석률'}</div></div>
   </div>
   ${!isStaff() ? `<div class="card" style="padding:12px 16px;margin-bottom:16px;font-size:.88rem;color:var(--sub)">
     🛠️ <b style="color:var(--text)">웹 관리자</b> 권한으로 접속 중 — 게시글·배너 관리를 할 수 있어요. 학생관리·멤버 관리는 교사·교역자 전용입니다.</div>` : `
@@ -1449,9 +1475,9 @@ function adminDash(){
     <div class="admin-section-title">⏳ 가입 승인 대기 (${wait.length})</div>
     ${wait.length ? wait.map(m=>`
       <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bg)">
-        <span class="avatar">${m.name.slice(1,3)}</span><b>${m.name}</b>
-        <span style="color:var(--sub);font-size:.85rem">${m.cls} · ${m.joined} 신청</span>
-        <button class="approve-btn" style="margin-left:auto" onclick="approveMember('${m.name}')">승인</button>
+        <span class="avatar">${esc(m.name.slice(1,3))}</span><b>${esc(m.name)}</b>
+        <span style="color:var(--sub);font-size:.85rem">${esc(m.cls)} · ${esc(m.joined)} 신청</span>
+        <button class="approve-btn" style="margin-left:auto" onclick="approveMember(this.dataset.n)" data-n="${esc(m.name)}">승인</button>
       </div>`).join('')
     : '<div class="empty" style="padding:20px">대기 중인 멤버가 없어요</div>'}
   </div>`}
@@ -1459,7 +1485,7 @@ function adminDash(){
     <div class="admin-section-title">🕐 최근 게시글</div>
     <div style="padding:6px 0">
     ${recent.map(p=>`<div class="bp-item" style="padding:8px 16px" onclick="openPost(${p.id})">
-      <span class="t">${p.title}</span><span class="meta">${p.author} · ${p.time}</span></div>`).join('')}
+      <span class="t">${esc(p.title)}</span><span class="meta">${esc(p.author)} · ${p.time}</span></div>`).join('')}
     </div>
   </div>
   ${isStaff()?`
@@ -1467,8 +1493,8 @@ function adminDash(){
     <div class="admin-section-title">🏕️ 수련회 신청 현황 (${retreatApps.length}명)</div>
     ${retreatApps.length ? retreatApps.map(a=>`
       <div style="display:flex;gap:10px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--bg);flex-wrap:wrap">
-        <b>${a.name}</b><span style="color:var(--sub);font-size:.85rem">${a.cls} · ${a.date} 신청</span>
-        ${a.note?`<span style="font-size:.8rem;color:var(--sub)">💬 ${a.note}</span>`:''}
+        <b>${esc(a.name)}</b><span style="color:var(--sub);font-size:.85rem">${esc(a.cls)} · ${a.date} 신청</span>
+        ${a.note?`<span style="font-size:.8rem;color:var(--sub)">💬 ${esc(a.note)}</span>`:''}
         <span class="status-pill ${a.fee?'ok':'wait'}" style="margin-left:auto">${a.fee?'회비 납부':'회비 미납'}</span>
       </div>`).join('') : '<div class="empty" style="padding:16px">아직 신청자가 없어요</div>'}
   </div>
@@ -1476,7 +1502,7 @@ function adminDash(){
     <div class="admin-section-title">🎁 포인트 교환 신청 (대기 ${redemptions.filter(r=>r.status==='pending').length})</div>
     ${redemptions.length ? redemptions.map((r,i)=>`
       <div style="display:flex;gap:10px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--bg)">
-        <b>${r.name}</b><span>${r.item}</span><span style="color:var(--sub);font-size:.8rem">${r.date}</span>
+        <b>${esc(r.name)}</b><span>${esc(r.item)}</span><span style="color:var(--sub);font-size:.8rem">${r.date}</span>
         ${r.status==='pending'
           ?`<button class="approve-btn" style="margin-left:auto" onclick="redeemDone(${i})">지급 완료</button>`
           :'<span class="status-pill ok" style="margin-left:auto">지급됨</span>'}
@@ -1490,9 +1516,9 @@ function adminMembers(){
   return `<div class="card table-scroll"><table class="admin-table">
   <tr><th>이름</th><th>소속</th><th>가입일</th><th>역할</th><th>소속 모임</th><th>상태</th></tr>
   ${members.map((m,i)=>`<tr>
-    <td style="white-space:nowrap"><b>${m.name}</b> ${badge(m.role)}</td>
-    <td style="white-space:nowrap">${m.cls}</td>
-    <td>${m.joined}</td>
+    <td style="white-space:nowrap"><b>${esc(m.name)}</b> ${badge(m.role)}</td>
+    <td style="white-space:nowrap">${esc(m.cls)}</td>
+    <td>${esc(m.joined)}</td>
     <td><select onchange="changeRole(${i},this.value)">
       ${Object.entries(roleName).map(([k,v])=>`<option value="${k}" ${m.role===k?'selected':''}>${v}</option>`).join('')}
     </select></td>
@@ -1503,7 +1529,7 @@ function adminMembers(){
     </td>
     <td style="white-space:nowrap">${m.status==='ok'
       ? '<span class="status-pill ok">활동중</span>'
-      : `<span class="status-pill wait">승인대기</span> <button class="approve-btn" onclick="approveMember('${m.name}')">승인</button>`}</td>
+      : `<span class="status-pill wait">승인대기</span> <button class="approve-btn" onclick="approveMember(this.dataset.n)" data-n="${esc(m.name)}">승인</button>`}</td>
   </tr>`).join('')}
   </table></div>`;
 }
@@ -1534,8 +1560,8 @@ function adminPosts(){
     const b = boards.find(x=>x.id===p.board);
     return `<tr>
       <td style="white-space:nowrap">${b.icon} ${b.name}</td>
-      <td class="t-title" onclick="openPost(${p.id})">${p.title}</td>
-      <td style="white-space:nowrap">${p.author}</td>
+      <td class="t-title" onclick="openPost(${p.id})">${esc(p.title)}</td>
+      <td style="white-space:nowrap">${esc(p.author)}</td>
       <td style="white-space:nowrap">${p.time}</td>
       <td>${p.likes}</td>
       <td><button class="pin-btn ${p.notice?'on':''}" onclick="toggleNotice(${p.id})">${p.notice?'공지중':'공지로'}</button></td>
@@ -1552,8 +1578,8 @@ function adminStudents(){
   const cares  = students.filter(s=>s.care);
   const person = (s, note) => `
     <div class="care-person" onclick="openStudentModal(${members.indexOf(s)})">
-      <span class="avatar">${s.name.slice(1,3)}</span>
-      <div><b>${s.name}</b><span class="cp-sub">${s.cls}</span><div class="cp-note">${note}</div></div>
+      <span class="avatar">${esc(s.name.slice(1,3))}</span>
+      <div><b>${esc(s.name)}</b><span class="cp-sub">${esc(s.cls)}</span><div class="cp-note">${esc(note)}</div></div>
     </div>`;
   return `
   <div class="care-grid">
@@ -1580,9 +1606,9 @@ function adminStudents(){
     ${students.map(s=>{
       const mi = members.indexOf(s);
       return `<tr>
-        <td style="white-space:nowrap"><b>${s.name}</b>${careBadges(s)}${s.status==='wait'?' <span class="status-pill wait">승인대기</span>':''}</td>
-        <td style="white-space:nowrap">${s.cls}</td>
-        <td style="white-space:nowrap">${s.school}</td>
+        <td style="white-space:nowrap"><b>${esc(s.name)}</b>${careBadges(s)}${s.status==='wait'?' <span class="status-pill wait">승인대기</span>':''}</td>
+        <td style="white-space:nowrap">${esc(s.cls)}</td>
+        <td style="white-space:nowrap">${esc(s.school)}</td>
         <td style="white-space:nowrap">${s.birthday.slice(5).replace('-','/')}</td>
         ${s.att.map((on,wi)=>`<td style="text-align:center">
           <button class="att-toggle ${on?'on':''}" onclick="toggleAttAdmin(${mi},${wi})">${on?'✓':'·'}</button></td>`).join('')}
@@ -1601,20 +1627,20 @@ function openStudentModal(mi){
     <div class="modal">
       <div class="modal-head">
         ${s.photo
-          ? `<img class="avatar" src="${s.photo}" style="width:46px;height:46px;object-fit:cover" alt="">`
-          : `<span class="avatar" style="width:46px;height:46px;font-size:14px">${s.name.slice(1,3)}</span>`}
+          ? `<img class="avatar" src="${esc(s.photo)}" style="width:46px;height:46px;object-fit:cover" alt="">`
+          : `<span class="avatar" style="width:46px;height:46px;font-size:14px">${esc(s.name.slice(1,3))}</span>`}
         <div>
-          <div style="font-weight:800;font-size:1.15rem">${s.name} ${careBadges(s)}</div>
-          <div style="color:var(--sub);font-size:.85rem">${s.cls} · ${s.school}</div>
+          <div style="font-weight:800;font-size:1.15rem">${esc(s.name)} ${careBadges(s)}</div>
+          <div style="color:var(--sub);font-size:.85rem">${esc(s.cls)} · ${esc(s.school)}</div>
         </div>
         <button class="modal-x" onclick="closeStudentModal()">✕</button>
       </div>
       <div class="info-grid">
-        <div><span class="k">생일</span>${s.birthday}</div>
-        <div><span class="k">연락처</span>${s.phone}</div>
-        <div><span class="k">보호자</span>${s.guardianPhone||'-'}</div>
-        <div><span class="k">등록일</span>${s.joined}</div>
-        <div><span class="k">최근 출석</span>${s.lastAttended}</div>
+        <div><span class="k">생일</span>${esc(s.birthday)}</div>
+        <div><span class="k">연락처</span>${esc(s.phone)}</div>
+        <div><span class="k">보호자</span>${esc(s.guardianPhone||'-')}</div>
+        <div><span class="k">등록일</span>${esc(s.joined)}</div>
+        <div><span class="k">최근 출석</span>${esc(s.lastAttended)}</div>
       </div>
       <div class="modal-label">이번 달 출석</div>
       <div style="display:flex;gap:8px">
@@ -1629,10 +1655,10 @@ function openStudentModal(mi){
           ${Object.entries(careTypes).map(([k,v])=>`<option value="${k}" ${s.care===k?'selected':''}>${v}</option>`).join('')}
         </select>
         <input type="text" style="flex:1;min-width:180px" placeholder="케어 메모 (예: 독감 회복 중)"
-          value="${s.careNote||''}" onchange="setCareNote(${mi}, this.value)">
+          value="${esc(s.careNote||'')}" onchange="setCareNote(${mi}, this.value)">
       </div>
       <div class="modal-label">심방·상담 기록</div>
-      ${s.memos.length ? s.memos.map(m=>`<div class="memo-item"><span class="d">${m.date}</span>${m.text}</div>`).join('') : '<div class="cp-empty">기록이 없어요</div>'}
+      ${s.memos.length ? s.memos.map(m=>`<div class="memo-item"><span class="d">${m.date}</span>${esc(m.text)}</div>`).join('') : '<div class="cp-empty">기록이 없어요</div>'}
       <div style="display:flex;gap:8px;margin-top:8px">
         <input type="text" id="memoInput" style="flex:1" placeholder="새 기록을 남겨주세요"
           onkeydown="if(event.key==='Enter')addStudentMemo(${mi})">
@@ -1715,10 +1741,10 @@ function adminBanner(){
       <button class="pin-btn" onclick="bannerMove(${i},-1)" ${i===0?'disabled':''}>▲</button>
       <button class="pin-btn" onclick="bannerMove(${i},1)" ${i===heroSlides.length-1?'disabled':''}>▼</button>
     </td>
-    <td><div style="width:96px;height:42px;border-radius:8px;background:${s.img?`url('${s.img}') center/cover`:s.grad};display:flex;align-items:center;justify-content:center;font-size:1.2rem">${s.img?'':s.emoji||''}</div></td>
-    <td>${s.tag}</td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${s.title}</b></td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.sub}</td>
+    <td><div style="width:96px;height:42px;border-radius:8px;background:${s.img?`url('${esc(s.img)}') center/cover`:s.grad};display:flex;align-items:center;justify-content:center;font-size:1.2rem">${s.img?'':esc(s.emoji||'')}</div></td>
+    <td>${esc(s.tag)}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${esc(s.title)}</b></td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.sub)}</td>
     <td style="white-space:nowrap">${s.postId?`글 #${s.postId}`:s.boardId?boards.find(b=>b.id===s.boardId).name:'-'}</td>
     <td><button class="del-btn" onclick="bannerDelete(${i})">삭제</button></td>
   </tr>`).join('')}
@@ -1781,16 +1807,20 @@ async function bannerAdd(){
   const { data, error } = await sb.from('ac_banners').insert(row).select().single();
   if(err(error,'배너 추가 실패')) return;
   heroSlides.push({ _id:data.id, tag:row.tag, emoji:row.emoji, title:row.title, sub:row.sub,
-    grad:row.grad, img:img_url, postId:row.post_id, boardId:row.board_id, sort:row.sort });
+    grad:row.grad, img:await signedOrOriginal(img_url), postId:row.post_id, boardId:row.board_id, sort:row.sort });
   showAdminTab('banner');
 }
 
 function toggleAttAdmin(mi, wi){
   const s = members[mi];
-  s.att[wi] = !s.att[wi]; // 낙관적 반영
-  addPoints(s, s.att[wi]?'주일예배 출석':'출석 체크 취소', s.att[wi]?20:-20);
-  if(s.att[wi]) s.lastAttended = attendance[wi].week.match(/\((.*)\)/)[1];
-  sb.rpc('ac_set_attendance', { target:s.id, wi, val:s.att[wi] }).then(({error})=>{
+  const val = !s.att[wi];
+  s.att[wi] = val; // 낙관적 반영 (포인트는 서버 RPC가 처리)
+  addPoints(s, val?'주일예배 출석':'출석 체크 취소', val?20:-20);
+  if(val){
+    s.lastAttendedDate = attendance[wi].ymd;
+    s.lastAttended = attendance[wi].week.match(/\((.*)\)/)[1];
+  }
+  sb.rpc('ac_att_set', { target:s.id, day:attendance[wi].ymd, val }).then(({error})=>{
     if(error){ alert('출석 저장 실패: '+error.message); }
   });
   showAdminTab('students');
@@ -1847,7 +1877,7 @@ function renderPoints(){
   <div class="points-grid">
    <div>
     <div class="card widget pt-hero">
-      <div style="opacity:.9;font-size:.9rem">${ME.name}님의 포인트</div>
+      <div style="opacity:.9;font-size:.9rem">${esc(ME.name)}님의 포인트</div>
       <div class="pv">${ME.points||0}P</div>
       <button class="pt-btn" onclick="dailyCheck()" ${dailyDone?'disabled':''}>${dailyDone?'오늘 웹 출석 완료 ✓':'📅 오늘의 웹 출석 +5P'}</button>
     </div>
@@ -1875,7 +1905,7 @@ function renderPoints(){
    <div>
     <div class="card widget">
       <h3>🏆 포인트 랭킹</h3>
-      ${rank.map((m,i)=>`<div class="rank-row"><span class="medal">${medals[i]}</span><span class="avatar">${m.name.slice(1,3)}</span><b>${m.name}</b><span style="color:var(--sub);font-size:.8rem">${m.cls}</span><span class="pts">${m.points||0}P</span></div>`).join('')}
+      ${rank.map((m,i)=>`<div class="rank-row"><span class="medal">${medals[i]}</span><span class="avatar">${esc(m.name.slice(1,3))}</span><b>${esc(m.name)}</b><span style="color:var(--sub);font-size:.8rem">${esc(m.cls)}</span><span class="pts">${m.points||0}P</span></div>`).join('')}
     </div>
     <div class="card widget">
       <h3>🎁 포인트 상점</h3>
@@ -1884,7 +1914,7 @@ function renderPoints(){
     </div>
     <div class="card widget">
       <h3>🧾 내 적립 내역</h3>
-      ${myLog.length ? myLog.map(l=>`<div class="log-row"><span style="color:var(--sub)">${l.date}</span><span>${l.label}</span><span class="amt ${l.amt>=0?'plus':'minus'}">${l.amt>=0?'+':''}${l.amt}P</span></div>`).join('') : '<div class="cp-empty">아직 내역이 없어요 — 글을 쓰고 출석해 보세요!</div>'}
+      ${myLog.length ? myLog.map(l=>`<div class="log-row"><span style="color:var(--sub)">${l.date}</span><span>${esc(l.label)}</span><span class="amt ${l.amt>=0?'plus':'minus'}">${l.amt>=0?'+':''}${l.amt}P</span></div>`).join('') : '<div class="cp-empty">아직 내역이 없어요 — 글을 쓰고 출석해 보세요!</div>'}
     </div>
    </div>
   </div>`;
@@ -1945,7 +1975,7 @@ function toggleNoti(){
   const nowHidden = p.classList.toggle('hidden');
   if(!nowHidden){
     p.innerHTML = visibleNotis().slice(0,15).map(n=>
-      `<div class="noti-item"><div>${n.text}</div><div class="nd">${n.date}</div></div>`).join('')
+      `<div class="noti-item"><div>${esc(n.text)}</div><div class="nd">${n.date}</div></div>`).join('')
       || '<div class="noti-item">알림이 없어요</div>';
     visibleNotis().forEach(n=>n.read=true);
     sb.rpc('ac_mark_notis_read').then(()=>{});
@@ -1961,15 +1991,15 @@ function openRetreatModal(){
   <div class="modal-bg" onclick="if(event.target===this)closeStudentModal()">
     <div class="modal">
       <div class="modal-head">
-        <div><div style="font-weight:800;font-size:1.15rem">🏕️ ${(SETTINGS.retreat||{}).title||'여름 수련회'} 신청</div>
-        <div style="color:var(--sub);font-size:.85rem">${(SETTINGS.retreat||{}).period||''} · ${(SETTINGS.retreat||{}).place||''} · 회비 ${(SETTINGS.retreat||{}).fee||''}</div></div>
+        <div><div style="font-weight:800;font-size:1.15rem">🏕️ ${esc((SETTINGS.retreat||{}).title||'여름 수련회')} 신청</div>
+        <div style="color:var(--sub);font-size:.85rem">${esc((SETTINGS.retreat||{}).period||'')} · ${esc((SETTINGS.retreat||{}).place||'')} · 회비 ${esc((SETTINGS.retreat||{}).fee||'')}</div></div>
         <button class="modal-x" onclick="closeStudentModal()">✕</button>
       </div>
       ${dup ? `<div class="cp-empty" style="padding:20px;text-align:center">이미 신청했어요! (${dup.date}) 🙌<br>변경은 담당 선생님께 말씀해 주세요.</div>` : `
       <div class="modal-label">신청자</div>
-      <input type="text" value="${ME.name} (${ME.cls||''})" disabled style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--bg)">
+      <input type="text" value="${esc(ME.name)} (${esc(ME.cls||'')})" disabled style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--bg)">
       <div class="modal-label">회비</div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:.92rem"><input type="checkbox" id="rFee"> 회비 ${(SETTINGS.retreat||{}).fee||''}을(를) 납부했어요 (또는 납부 예정)</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.92rem"><input type="checkbox" id="rFee"> 회비 ${esc((SETTINGS.retreat||{}).fee||'')}을(를) 납부했어요 (또는 납부 예정)</label>
       <div class="modal-label">참고사항 (선택)</div>
       <input type="text" id="rNote" placeholder="알레르기, 약 복용 등 선생님이 알아야 할 내용" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
       <button class="approve-btn" style="margin-top:16px;width:100%;padding:12px" onclick="retreatApply()">신청하기</button>`}
@@ -2139,7 +2169,7 @@ async function boot(){
 
 /* ----- 전체 로딩 ----- */
 async function loadAll(){
-  const [mem, pst, cmt, lk, pry, pp, ban, noti] = await Promise.all([
+  const [mem, pst, cmt, lk, pry, pp, ban, noti, attRows] = await Promise.all([
     sb.from('ac_members').select('*').order('joined'),
     sb.from('ac_posts').select('*').order('id'),
     sb.from('ac_comments').select('*').order('id'),
@@ -2148,14 +2178,25 @@ async function loadAll(){
     sb.from('ac_prayer_prays').select('*'),
     sb.from('ac_banners').select('*').order('sort'),
     sb.from('ac_notifications').select('*').order('id',{ascending:false}).limit(30),
+    sb.from('ac_attendance').select('member_id,d'),
   ]);
   members = (mem.data||[]).map(m=>({
     id:m.id, name:m.name, role:m.role, teams:m.teams||[], siteAdmin:m.site_admin,
-    points:m.points, cls:m.cls, status:m.status, att:m.att||[false,false,false,false],
+    points:m.points, cls:m.cls, status:m.status, att:attendance.map(()=>false),
     joined:String(m.joined||''), school:'-', birthday:'-', phone:'-', guardianPhone:'-',
     photo:m.photo_url||null,
-    care:null, careNote:'', lastAttended:'-', memos:[], _lastRead:m.last_noti_read,
+    care:null, careNote:'', lastAttended:'-', lastAttendedDate:null, memos:[], _lastRead:m.last_noti_read,
   }));
+  // 날짜 기반 출석 기록 반영 (ac_attendance)
+  const attByM = {};
+  (attRows.data||[]).forEach(r=>{ (attByM[r.member_id] = attByM[r.member_id]||[]).push(r.d); });
+  members.forEach(m=>{
+    const ds = attByM[m.id]||[];
+    m.att = attendance.map(w=>ds.includes(w.ymd));
+    m.lastAttendedDate = ds.length ? ds.slice().sort().pop() : null;
+    m.lastAttended = m.lastAttendedDate
+      ? Number(m.lastAttendedDate.slice(5,7)) + '/' + Number(m.lastAttendedDate.slice(8,10)) : '-';
+  });
   ME = members.find(m=>m.id===MYID) || null;
   if(!ME) return;
   // 교적: RLS가 알아서 필터 (교사·교역자=전체, 학생=본인 것만)
@@ -2167,7 +2208,7 @@ async function loadAll(){
   (priv.data||[]).forEach(p=>{ const m=members.find(x=>x.id===p.member_id); if(m){
     m.school=p.school||'-'; m.birthday=p.birthday||'-'; m.phone=p.phone||'-';
     m.guardianPhone=p.guardian_phone||'-';
-    m.care=p.care||null; m.careNote=p.care_note||''; m.lastAttended=p.last_attended||'-'; } });
+    m.care=p.care||null; m.careNote=p.care_note||''; } });
   (memos.data||[]).forEach(c=>{ const m=members.find(x=>x.id===c.member_id);
     if(m) m.memos.push({ _id:c.id, date:fmtDate(c.created_at), text:c.text }); });
   (st.data||[]).forEach(r=>{ SETTINGS[r.key] = r.value; });
@@ -2204,6 +2245,7 @@ async function loadAll(){
   retreatApps = (ra.data||[]).map(a=>{ const m=members.find(x=>x.id===a.member_id)||{};
     return { _id:a.id, _mid:a.member_id, name:m.name||'?', cls:m.cls||'', fee:a.fee, note:a.note, date:fmtDate(a.created_at) }; });
   redemptions = (rd.data||[]).map(r=>({ _id:r.id, name:nameOf(r.member_id), item:r.item, date:fmtDate(r.created_at), status:r.status }));
+  await signAllPhotos(); // 비공개 버킷 사진을 서명 URL로 교체
 }
 
 /* ----- 포인트 적립 (서버 검증 RPC) ----- */
@@ -2216,6 +2258,35 @@ async function earn(kind){
   pointLog.unshift({ name:ME.name, date:todayMD(), label:lblMap[kind], amt:data });
   showToast(`+${data}P · ${lblMap[kind]} 🎉`);
   return data;
+}
+
+/* ----- 사진 보안: 비공개 버킷 + 서명 URL ----- */
+const PHOTO_BUCKET = 'ac-photos';
+function photoPathFromUrl(u){
+  if(!u) return null;
+  const parts = String(u).split('/' + PHOTO_BUCKET + '/');
+  return parts.length > 1 ? decodeURIComponent(parts[1].split('?')[0]) : null;
+}
+/* 저장은 기존처럼 공개 URL 형식 문자열로 하되, 표시할 때는 서명 URL로 교체.
+   버킷이 아직 공개 상태여도 원본 URL로 폴백하므로 안전하게 동작. */
+async function signedOrOriginal(url){
+  const p = photoPathFromUrl(url);
+  if(!p) return url;
+  try{
+    const { data } = await sb.storage.from(PHOTO_BUCKET).createSignedUrl(p, 60*60*12);
+    return (data && data.signedUrl) || url;
+  }catch(e){ return url; }
+}
+async function signAllPhotos(){
+  const jobs = [];
+  members.forEach(m=>{ const p = photoPathFromUrl(m.photo); if(p) jobs.push({ p, set:u=>m.photo=u }); });
+  posts.forEach(x=>{ const p = photoPathFromUrl(x.img); if(p) jobs.push({ p, set:u=>x.img=u }); });
+  heroSlides.forEach(s=>{ const p = photoPathFromUrl(s.img); if(p) jobs.push({ p, set:u=>s.img=u }); });
+  if(!jobs.length) return;
+  try{
+    const { data } = await sb.storage.from(PHOTO_BUCKET).createSignedUrls(jobs.map(j=>j.p), 60*60*12);
+    (data||[]).forEach((r,i)=>{ if(r && r.signedUrl) jobs[i].set(r.signedUrl); });
+  }catch(e){ /* 서명 실패 시 기존 URL 유지 */ }
 }
 
 /* ----- 사진 업로드 (Storage) ----- */
@@ -2276,9 +2347,9 @@ function doSearch(){
   document.getElementById('searchInfo').textContent = `"${q}" — ${res.length}건`;
   document.getElementById('searchList').innerHTML = res.length ? res.map(p=>
     `<div class="post-row" onclick="openPost(${p.id})">
-      <div class="title-wrap"><span class="title">${p.title}</span>
+      <div class="title-wrap"><span class="title">${esc(p.title)}</span>
       ${p.comments.length?`<span class="cmt">[${p.comments.length}]</span>`:''}</div>
-      <span class="author">${p.author}${badge(p.role)}</span>
+      <span class="author">${esc(p.author)}${badge(p.role)}</span>
       <span class="time">${p.time}</span>
     </div>`).join('') : '<div class="empty">검색 결과가 없어요</div>';
 }

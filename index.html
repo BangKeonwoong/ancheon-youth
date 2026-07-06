@@ -25,6 +25,10 @@
 .authing header,.authing .layout,.authing .mobile-nav{display:none}
 .logout-btn{font-size:.72rem;color:var(--sub);padding:2px 5px;border-radius:6px;flex-shrink:0}
 .logout-btn:hover{background:var(--bg);color:var(--pastor)}
+.kakao-btn{width:100%;background:#FEE500;color:#191919;font-weight:800;padding:13px;border-radius:10px;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px}
+.kakao-btn:hover{filter:brightness(.96)}
+.auth-divider{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:.78rem;margin:14px 0 10px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--line)}
 </style>
 <style>
 :root{
@@ -1168,6 +1172,9 @@ function openProfileModal(){
     <div class="modal-label">학교·학년</div><input id="pfSchool" value="${esc(ME.school!=='-'?ME.school:'')}" placeholder="예: 안천중 2학년" style="${inp}">
     <div class="modal-label">내 연락처</div><input id="pfPhone" value="${esc(ME.phone!=='-'?ME.phone:'')}" placeholder="010-0000-0000" style="${inp}">
     <div class="modal-label">보호자 연락처 (선택)</div><input id="pfGuard" value="${esc(ME.guardianPhone&&ME.guardianPhone!=='-'?ME.guardianPhone:'')}" placeholder="010-0000-0000" style="${inp}">
+    <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;margin-top:14px;cursor:pointer">
+      <input type="checkbox" id="pfAlim" ${ME.alimConsent?'checked':''}> 📨 카카오 알림톡으로 공지 받기 (위 연락처로 발송)
+    </label>
     <button class="auth-btn" style="margin-top:16px" onclick="saveProfile()">저장하기${done?'':' (+100P)'}</button>
   </div></div>`;
 }
@@ -1182,10 +1189,11 @@ async function saveProfile(){
     school: document.getElementById('pfSchool').value.trim() || '-',
     phone: document.getElementById('pfPhone').value.trim() || '-',
     guardian_phone: document.getElementById('pfGuard').value.trim() || '-',
+    alim_consent: document.getElementById('pfAlim').checked,
   };
   const { error } = await sb.from('ac_member_private').update(upd).eq('member_id', MYID);
   if(err(error,'저장 실패')) return;
-  ME.birthday=upd.birthday; ME.school=upd.school; ME.phone=upd.phone; ME.guardianPhone=upd.guardian_phone;
+  ME.birthday=upd.birthday; ME.school=upd.school; ME.phone=upd.phone; ME.guardianPhone=upd.guardian_phone; ME.alimConsent=upd.alim_consent;
   closeStudentModal();
   renderUserChip();
   const r = await earn('profile');
@@ -1607,7 +1615,7 @@ function adminPosts(){
       <td style="white-space:nowrap">${p.time}</td>
       <td>${p.likes}</td>
       <td><button class="pin-btn ${p.notice?'on':''}" onclick="toggleNotice(${p.id})">${p.notice?'공지중':'공지로'}</button></td>
-      <td><button class="del-btn" onclick="deletePostAdmin(${p.id})">삭제</button></td>
+      <td style="white-space:nowrap">${p.notice?`<button class="pin-btn" onclick="sendAlimtalk(${p.id})">📨 알림톡</button> `:''}<button class="del-btn" onclick="deletePostAdmin(${p.id})">삭제</button></td>
     </tr>`;}).join('')}
   </table></div>`;
 }
@@ -1756,6 +1764,19 @@ async function toggleNotice(id){
   if(err(error,'변경 실패')) return;
   p.notice = !p.notice;
   showAdminTab('posts');
+}
+/* 알림톡 발송 — Supabase Edge Function(send-alimtalk) 경유 (대행사 연동 완료 후 동작) */
+async function sendAlimtalk(id){
+  const p = posts.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm(`"${p.title}" 공지를 알림톡으로 발송할까요?\n(알림톡 수신에 동의한 멤버에게 전송됩니다)`)) return;
+  try{
+    const { data, error } = await sb.functions.invoke('send-alimtalk', { body: { post_id: id } });
+    if(error) throw error;
+    showToast(`📨 알림톡 발송 완료! (${(data && data.sent) || 0}명)`);
+  }catch(e){
+    alert('알림톡 발송 실패 — 발송 설정(카카오 채널·대행사 연동)이 아직 완료되지 않았을 수 있어요.\n\n' + (e.message || e));
+  }
 }
 async function deletePostAdmin(id){
   const p = posts.find(x=>x.id===id);
@@ -2143,8 +2164,20 @@ function showAuth(mode){
       <button style="margin-top:12px;color:var(--sub);font-size:.85rem;width:100%" onclick="logout()">로그아웃</button></div>`;
     return;
   }
+  if(mode==='rename'){ // 카카오 등 소셜 가입 후 이름이 없는 경우 실명 입력
+    card.innerHTML = logo + `
+      <div style="text-align:center;font-weight:800;font-size:1.05rem;margin-bottom:6px">환영해요! 🎉</div>
+      <div style="color:var(--sub);font-size:.88rem;text-align:center;margin-bottom:14px">커뮤니티에서 사용할 이름(실명)을 알려주세요</div>
+      <input id="aName" placeholder="이름 (실명)" maxlength="10" onkeydown="if(event.key==='Enter')doRename()">
+      <div class="auth-err" id="aErr"></div>
+      <button class="auth-btn" id="aBtn" onclick="doRename()">시작하기</button>
+      <button style="margin-top:12px;color:var(--sub);font-size:.85rem;width:100%" onclick="logout()">로그아웃</button>`;
+    return;
+  }
   const isLogin = mode!=='signup';
   card.innerHTML = logo + `
+    <button class="kakao-btn" onclick="kakaoLogin()"><span style="font-size:1.1rem">💬</span> 카카오로 시작하기</button>
+    <div class="auth-divider">또는 이메일로</div>
     <div class="auth-tabs">
       <button class="${isLogin?'active':''}" onclick="showAuth('login')">로그인</button>
       <button class="${!isLogin?'active':''}" onclick="showAuth('signup')">회원가입</button>
@@ -2158,6 +2191,22 @@ function showAuth(mode){
     <div style="text-align:center;margin-top:14px"><a href="proto.html" style="font-size:.78rem;color:var(--sub);text-decoration:underline">가입 없이 체험판 둘러보기</a></div>`;
 }
 function val(id){ return document.getElementById(id).value.trim(); }
+async function kakaoLogin(){
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'kakao',
+    options: { redirectTo: location.origin + location.pathname }
+  });
+  if(error) alert('카카오 로그인 실패: ' + error.message);
+}
+async function doRename(){
+  const name = val('aName');
+  if(!name){ document.getElementById('aErr').textContent='이름을 입력해 주세요'; return; }
+  const btn = document.getElementById('aBtn'); btn.disabled = true;
+  const { error } = await sb.rpc('ac_set_name', { nm:name });
+  btn.disabled = false;
+  if(error){ document.getElementById('aErr').textContent='실패: '+error.message; return; }
+  boot();
+}
 async function doLogin(){
   const btn=document.getElementById('aBtn'); btn.disabled=true;
   const { error } = await sb.auth.signInWithPassword({ email:val('aEmail'), password:val('aPw') });
@@ -2208,6 +2257,7 @@ async function boot(){
   MYID = user.id;
   try{ await loadAll(); }catch(e){ alert('데이터 로딩 실패: '+e.message); return; }
   if(!ME){ showAuth('name'); return; }           // 기존 계정 → 이름 입력 후 멤버 생성
+  if(ME.name==='이름없음'){ showAuth('rename'); return; } // 카카오 가입 → 실명 입력
   if(ME.status!=='ok'){ showAuth('wait'); return; }
   startApp();
 }
@@ -2256,7 +2306,7 @@ async function loadAll(){
   (priv.data||[]).forEach(p=>{ const m=members.find(x=>x.id===p.member_id); if(m){
     m.school=p.school||'-'; m.birthday=p.birthday||'-'; m.phone=p.phone||'-';
     m.guardianPhone=p.guardian_phone||'-';
-    m.care=p.care||null; m.careNote=p.care_note||''; } });
+    m.care=p.care||null; m.careNote=p.care_note||''; m.alimConsent=!!p.alim_consent; } });
   (memos.data||[]).forEach(c=>{ const m=members.find(x=>x.id===c.member_id);
     if(m) m.memos.push({ _id:c.id, date:fmtDate(c.created_at), text:c.text }); });
   (st.data||[]).forEach(r=>{ SETTINGS[r.key] = r.value; });

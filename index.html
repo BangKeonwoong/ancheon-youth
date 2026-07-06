@@ -1525,7 +1525,7 @@ function adminDash(){
       <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bg)">
         <span class="avatar">${esc(m.name.slice(1,3))}</span><b>${esc(m.name)}</b>
         <span style="color:var(--sub);font-size:.85rem">${esc(m.cls)} · ${esc(m.joined)} 신청</span>
-        <button class="approve-btn" style="margin-left:auto" onclick="approveMember(this.dataset.n)" data-n="${esc(m.name)}">승인</button>
+        <button class="approve-btn" style="margin-left:auto" onclick="approveMemberById('${m.id}')">승인</button>
       </div>`).join('')
     : '<div class="empty" style="padding:20px">대기 중인 멤버가 없어요</div>'}
   </div>`}
@@ -1577,7 +1577,7 @@ function adminMembers(){
     </td>
     <td style="white-space:nowrap">${m.status==='ok'
       ? '<span class="status-pill ok">활동중</span>'
-      : `<span class="status-pill wait">승인대기</span> <button class="approve-btn" onclick="approveMember(this.dataset.n)" data-n="${esc(m.name)}">승인</button>`}</td>
+      : `<span class="status-pill wait">승인대기</span> <button class="approve-btn" onclick="approveMemberById('${m.id}')">승인</button>`}</td>
   </tr>`).join('')}
   </table></div>`;
 }
@@ -1741,11 +1741,12 @@ async function addStudentMemo(mi){
   openStudentModal(mi);
 }
 
-async function approveMember(name){
-  const m = members.find(x=>x.name===name);
+/* 이름이 아닌 고유 ID로 승인 — 동명이인이 있어도 정확한 계정이 승인됩니다 */
+async function approveMemberById(id){
+  const m = members.find(x=>x.id===id);
   if(!m) return;
   // RPC 사용: RLS로 인한 '조용한 실패' 방지 — 실패하면 명확한 오류가 표시됩니다
-  const { error } = await sb.rpc('ac_approve_member', { target:m.id });
+  const { error } = await sb.rpc('ac_approve_member', { target:id });
   if(err(error,'승인 실패')) return;
   m.status = 'ok';
   showAdminTab(currentAdminTab);

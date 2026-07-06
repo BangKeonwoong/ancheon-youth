@@ -746,6 +746,7 @@ header{
         <button data-atab="members" onclick="showAdminTab('members')">👥 멤버 관리</button>
         <button data-atab="posts" onclick="showAdminTab('posts')">📝 게시글 관리</button>
         <button data-atab="banner" onclick="showAdminTab('banner')">🖼️ 배너 관리</button>
+        <button data-atab="events" onclick="showAdminTab('events')">📅 일정 관리</button>
       </div>
       <div id="adminBody"></div>
     </section>
@@ -942,13 +943,7 @@ let prayers = [
 ];
 SEED_END ===== */
 
-const events = [
-  { date:'2026-06-14', title:'주일예배', sub:'오전 11시 · 교육관 2층' },
-  { date:'2026-06-20', title:'청소년부 체육대회', sub:'오후 2시 · 안천중 운동장' },
-  { date:'2026-06-21', title:'수련회 신청 마감', sub:'각 반 선생님께 제출' },
-  { date:'2026-06-28', title:'찬양팀 정기연습', sub:'오후 1시 · 본당' },
-  { date:'2026-07-24', title:'여름 수련회 (1일차)', sub:'가평 수양관 · 7/24~26' },
-];
+let events = []; // Supabase ac_events에서 로드 (관리자 페이지에서 관리)
 
 /* 이번 달 주일(일요일)을 자동 생성 — 매달 코드를 수정할 필요가 없어요 */
 function ymdStr(d){
@@ -1405,7 +1400,7 @@ function renderCalendar(){
   for(let i=0;i<first;i++) html += '<div class="cal-cell"></div>';
   for(let d=1;d<=days;d++){
     const ds = `${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const evs = events.filter(e=>e.date===ds).map(e=>`<div class="cal-ev">${e.title}</div>`).join('');
+    const evs = events.filter(e=>e.date===ds).map(e=>`<div class="cal-ev">${esc(e.title)}</div>`).join('');
     const isToday = today.getFullYear()===calY && today.getMonth()===calM && today.getDate()===d;
     html += `<div class="cal-cell ${isToday?'today':''}"><span class="d">${d}</span>${evs}</div>`;
   }
@@ -1416,9 +1411,9 @@ function renderCalendar(){
     const dt = new Date(e.date);
     return `<div class="event-item">
       <div class="ed"><div class="m">${dt.getMonth()+1}월</div><div class="dd">${dt.getDate()}</div></div>
-      <div><div class="et">${e.title}</div><div class="es">${e.sub}</div></div>
+      <div><div class="et">${esc(e.title)}</div><div class="es">${esc(e.sub)}</div></div>
     </div>`;
-  }).join('');
+  }).join('') || '<div class="empty" style="padding:16px">다가오는 일정이 없어요</div>';
 }
 
 /* ================= 출석체크 ================= */
@@ -1438,7 +1433,7 @@ function renderAttendance(){
 
 /* ================= 관리자 ================= */
 let currentAdminTab = 'dash';
-const staffOnlyTabs = ['students','members']; // 학생 개인정보가 있어 교사·교역자 전용
+const staffOnlyTabs = ['students','members','events']; // 교사·교역자 전용
 function showAdminTab(tab){
   if(staffOnlyTabs.includes(tab) && !isStaff()) tab = 'dash';
   currentAdminTab = tab;
@@ -1452,6 +1447,51 @@ function showAdminTab(tab){
   if(tab==='members')  el.innerHTML = adminMembers();
   if(tab==='posts')    el.innerHTML = adminPosts();
   if(tab==='banner')   el.innerHTML = adminBanner();
+  if(tab==='events')   el.innerHTML = adminEvents();
+}
+
+/* ----- 일정 관리 ----- */
+function adminEvents(){
+  const list = events.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  return `
+  <div class="card table-scroll" style="margin-bottom:16px"><table class="admin-table">
+  <tr><th>날짜</th><th>일정</th><th>설명</th><th></th></tr>
+  ${list.length ? list.map(e=>`<tr>
+    <td style="white-space:nowrap">${esc(e.date)}</td>
+    <td style="white-space:nowrap"><b>${esc(e.title)}</b></td>
+    <td>${esc(e.sub)}</td>
+    <td><button class="del-btn" onclick="eventDelete(${e._id})">삭제</button></td>
+  </tr>`).join('') : '<tr><td colspan="4" class="empty">등록된 일정이 없어요</td></tr>'}
+  </table></div>
+  <div class="card" style="padding:18px">
+    <div style="font-weight:700;margin-bottom:12px">➕ 새 일정 추가</div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <input type="date" id="evDate" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
+      <input type="text" id="evTitle" placeholder="일정 이름 *" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">
+      <input type="text" id="evSub" placeholder="설명 (시간·장소 등, 선택)" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none;grid-column:1/-1">
+    </div>
+    <button class="approve-btn" style="margin-top:12px;padding:10px 22px" onclick="eventAdd()">일정 추가</button>
+  </div>`;
+}
+async function eventAdd(){
+  const d = document.getElementById('evDate').value;
+  const title = document.getElementById('evTitle').value.trim();
+  const sub = document.getElementById('evSub').value.trim();
+  if(!d){ alert('날짜를 선택해 주세요!'); return; }
+  if(!title){ alert('일정 이름을 입력해 주세요!'); return; }
+  const { data, error } = await sb.from('ac_events').insert({ d, title, sub }).select().single();
+  if(err(error,'일정 추가 실패')) return;
+  events.push({ _id:data.id, date:data.d, title:data.title, sub:data.sub });
+  showAdminTab('events');
+  showToast('일정이 추가됐어요!');
+}
+async function eventDelete(id){
+  const e = events.find(x=>x._id===id);
+  if(!confirm(`"${e.title}" 일정을 삭제할까요?`)) return;
+  const { error } = await sb.from('ac_events').delete().eq('id', id);
+  if(err(error,'삭제 실패')) return;
+  events = events.filter(x=>x._id!==id);
+  showAdminTab('events');
 }
 
 function adminDash(){
@@ -1536,8 +1576,9 @@ function adminMembers(){
 
 async function toggleSiteAdmin(i){
   const m = members[i];
-  const { error } = await sb.from('ac_members').update({ site_admin:!m.siteAdmin }).eq('id', m.id);
+  const { data, error } = await sb.from('ac_members').update({ site_admin:!m.siteAdmin }).eq('id', m.id).select('id');
   if(err(error,'변경 실패')) return;
+  if(!data || !data.length){ alert('변경이 저장되지 않았어요 — 교사·교역자 계정인지 확인해 주세요'); return; }
   m.siteAdmin = !m.siteAdmin;
   showAdminTab('members');
   if(m===ME) document.getElementById('adminNavBtn').classList.toggle('hidden', !canAdmin());
@@ -1546,8 +1587,9 @@ async function toggleSiteAdmin(i){
 async function toggleTeam(i, team){
   const m = members[i];
   const next = (m.teams||[]).includes(team) ? m.teams.filter(t=>t!==team) : [...(m.teams||[]), team];
-  const { error } = await sb.from('ac_members').update({ teams:next }).eq('id', m.id);
+  const { data, error } = await sb.from('ac_members').update({ teams:next }).eq('id', m.id).select('id');
   if(err(error,'변경 실패')) return;
+  if(!data || !data.length){ alert('변경이 저장되지 않았어요 — 교사·교역자 계정인지 확인해 주세요'); return; }
   m.teams = next;
   showAdminTab('members');
   renderSidebar();
@@ -1694,14 +1736,17 @@ async function addStudentMemo(mi){
 async function approveMember(name){
   const m = members.find(x=>x.name===name);
   if(!m) return;
-  const { error } = await sb.from('ac_members').update({ status:'ok' }).eq('id', m.id);
+  // RPC 사용: RLS로 인한 '조용한 실패' 방지 — 실패하면 명확한 오류가 표시됩니다
+  const { error } = await sb.rpc('ac_approve_member', { target:m.id });
   if(err(error,'승인 실패')) return;
   m.status = 'ok';
   showAdminTab(currentAdminTab);
+  showToast(`${m.name} 님 가입 승인 완료! 🎉`);
 }
 async function changeRole(i, role){
-  const { error } = await sb.from('ac_members').update({ role }).eq('id', members[i].id);
+  const { data, error } = await sb.from('ac_members').update({ role }).eq('id', members[i].id).select('id');
   if(err(error,'변경 실패')) return;
+  if(!data || !data.length){ alert('변경이 저장되지 않았어요 — 교사·교역자 계정인지 확인해 주세요'); return; }
   members[i].role = role;
   showAdminTab('members');
 }
@@ -1935,7 +1980,7 @@ async function verseSubmit(){
     alert('구절과 조금 달라요! 다시 한 번 천천히 살펴보세요 🙂');
     return;
   }
-  const r = await earn('verse');
+  const r = await earn('verse', v); // 서버에서도 구절 일치를 검증
   if(r===-1) showToast('오늘은 이미 완료했어요!');
   renderPoints();
 }
@@ -2169,7 +2214,7 @@ async function boot(){
 
 /* ----- 전체 로딩 ----- */
 async function loadAll(){
-  const [mem, pst, cmt, lk, pry, pp, ban, noti, attRows] = await Promise.all([
+  const [mem, pst, cmt, lk, pry, pp, ban, noti, attRows, evRows] = await Promise.all([
     sb.from('ac_members').select('*').order('joined'),
     sb.from('ac_posts').select('*').order('id'),
     sb.from('ac_comments').select('*').order('id'),
@@ -2179,6 +2224,7 @@ async function loadAll(){
     sb.from('ac_banners').select('*').order('sort'),
     sb.from('ac_notifications').select('*').order('id',{ascending:false}).limit(30),
     sb.from('ac_attendance').select('member_id,d'),
+    sb.from('ac_events').select('*').order('d'),
   ]);
   members = (mem.data||[]).map(m=>({
     id:m.id, name:m.name, role:m.role, teams:m.teams||[], siteAdmin:m.site_admin,
@@ -2187,6 +2233,8 @@ async function loadAll(){
     photo:m.photo_url||null,
     care:null, careNote:'', lastAttended:'-', lastAttendedDate:null, memos:[], _lastRead:m.last_noti_read,
   }));
+  // 일정 로드 (ac_events)
+  events = (evRows.data||[]).map(e=>({ _id:e.id, date:e.d, title:e.title, sub:e.sub }));
   // 날짜 기반 출석 기록 반영 (ac_attendance)
   const attByM = {};
   (attRows.data||[]).forEach(r=>{ (attByM[r.member_id] = attByM[r.member_id]||[]).push(r.d); });
@@ -2249,9 +2297,12 @@ async function loadAll(){
 }
 
 /* ----- 포인트 적립 (서버 검증 RPC) ----- */
-async function earn(kind){
-  const { data, error } = await sb.rpc('ac_earn_points', { kind });
-  if(error) return null;
+async function earn(kind, payload){
+  const { data, error } = await sb.rpc('ac_earn_points', { kind, payload: payload ?? null });
+  if(error){
+    if(kind==='verse') alert('적립 실패: ' + error.message);
+    return null;
+  }
   if(data === -1) return -1;
   const lblMap = { daily:'웹 출석', verse:'말씀 따라쓰기', post:'게시글 작성', comment:'댓글 작성', prayer:'기도제목 나눔', profile:'교적 작성' };
   ME.points += data;
